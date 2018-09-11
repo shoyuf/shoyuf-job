@@ -23,6 +23,8 @@
 - [ ] 单元测试
 - [ ] 代码部署
 - [ ] 优化代码
+- [ ] JSDoc
+- [ ] APIDoc
 
 ### 界面
 
@@ -44,6 +46,25 @@
   
   *本项目默认使用 `MongoDB` 存储，需要在 `config` 目录下建立 `secret_config.js` 文件，并输入如下数据，如有其他适配（如数据库验证）还需修改 `app/service/mongodb.js` 的内容*
 
+  ```js
+  module.exports = {
+    cookieKeyStr: 'cookieKeyStr', // Cookie 密钥
+    database: {
+      url: 'mongodb://mongo:27017', // MongoDB 数据库链接地址
+      baseName: 'job', // MongoDB Collection 名称
+      auth: { // 认证相关
+        authSource: 'admin',
+        user: 'user',
+        password: 'password',
+      },
+    },
+  };
+  ```
+
+- API 来源
+  拉勾 | Boss直聘
+  - | -
+  Web | WeChat Mini Program 
 ### 鸣谢
 
 - [Egg](https://eggjs.org/)

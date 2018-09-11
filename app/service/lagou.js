@@ -1,7 +1,7 @@
 'use strict';
 
 const Service = require('egg').Service;
-
+const moment = require('moment');
 class LagouService extends Service {
   /**
    * @param {int} pageNum - 页码
@@ -18,17 +18,18 @@ class LagouService extends Service {
    * @return { string } list[].companySize - 公司人数
    * @return { string } list[].district - 公司所在区县
    * @return { string } list[].education - 学历要求
-   * @return { string } list[].createTime - 发布时间 "2018-09-05 15:05:14"
+   * @return { string } list[].createTime - 发布时间 JS Date
    * @return { string } list[].latitude - 纬度
    * @return { string } list[].longitude - 经度
    * @return { string } list[].positionAdvantage - 公司优势 "技术大牛带,年底奖金,公司高速发"
    * @return { string } list[].positionId - 职位ID 判断重复
    * @return { string } list[].positionName - 职位名称
-   * @return { string } list[].salary - 薪资 "12k-20k"
+   * @return { int } list[].salary_min - 最低薪资
+   * @return { int } list[].salary_max - 最高薪资
    * @return { string } list[].subwayline - 地铁线
    * @return { string } list[].stationname - 地铁站
    * @return { string } list[].workYear - 年资
-   * @return { string } list[].jobForm - 来自
+   * @return { string } list[].jobFrom - 来自
    * @return { string } list[].url - url
    */
   async remoteList(pageNum = 1, city = '成都', keyword = 'web前端', gzxz = '全职') {
@@ -47,7 +48,7 @@ class LagouService extends Service {
       },
     });
     const list = [];
-    if (res.data.content) {
+    if (res.headers['content-type'] !== 'text/html' && res.data.content) {
       const totalCount = res.data.content.positionResult.totalCount;
       const cityName = res.data.content.positionResult.locationInfo.city;
       const positionName = res.data.content.positionResult.queryAnalysisInfo.positionName;
@@ -64,17 +65,20 @@ class LagouService extends Service {
           companySize: el.companySize,
           district: el.district,
           education: el.education,
-          createTime: el.createTime,
+          createTime: moment(el.createTime).isValid() ? moment(el.createTime).clone().toDate() : null,
           latitude: el.latitude,
           longitude: el.longitude,
           positionAdvantage: el.positionAdvantage,
           positionId: el.positionId,
           positionName: el.positionName,
-          salary: el.salary,
+          salary_min: parseInt(el.salary.split('-')[0].split('k')[0]) || null,
+          salary_max: parseInt(el.salary.split('-')[1].split('k')[0]) || null,
           subwayline: el.subwayline,
           stationname: el.stationname,
           workYear: el.workYear,
-          jobForm: 'lagou',
+          address: null,
+          desc: null,
+          jobFrom: 'lagou',
           url: `https://www.lagou.com/jobs/${el.positionId}.html`,
         });
       });
@@ -82,7 +86,7 @@ class LagouService extends Service {
         list,
       };
     }
-    console.log(res.data);
+    console.log('返回数据错误！', res.data);
     return { list: [] };
   }
   /**
@@ -102,41 +106,6 @@ class LagouService extends Service {
       keyword,
       insertCount,
     });
-  }
-  // async fuckSpider(list, refererStr) {
-  //   const arr = [];
-  //   list.forEach(el => {
-  //     arr.push(el.companyId);
-  //   });
-  //   const res = await this.ctx.curl(`https://www.lagou.com/c/approve.json?companyIds=${encodeURIComponent(arr.toString())}`, {
-  //     dataType: 'json',
-  //     headers: {
-  //       Referer: refererStr,
-  //       'X-Requested-With': ' XMLHttpRequest',
-  //     },
-  //   });
-  //   if (res.data.state !== 1) {
-  //     console.log(res.data, 'Fucking Spider Fail');
-  //   } else {
-  //     return true;
-  //   }
-  // }
-  async list(currentPage = 1) {
-    const { ctx } = this;
-    const pageSize = 1000;
-    const client = await ctx.service.mongodb.client();
-    const skip = currentPage === 1 ? 0 : pageSize * (currentPage - 1);
-    // const filter = status === 1 ? { status: 1 } : {};
-    const filter = {};
-    const res = await client.collection('jobs').find(filter, {
-      limit: pageSize, skip,
-      sort: {
-        createTime: -1,
-      },
-    }).toArray();
-    // const maxPage = Math.ceil(await client.collection('jobs').find(filter).count() / pageSize);
-    const maxPage = 1;
-    return Object.assign(res, { pageInfo: { maxPage, currentPage: parseInt(currentPage, 10) } });
   }
 }
 

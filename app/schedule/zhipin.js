@@ -1,58 +1,51 @@
-'use strict';
 
+
+'use strict';
 const Subscription = require('egg').Subscription;
-const moment = require('moment');
 let currentPage = 1;
 const totalPage = 'unknown';
 let updatedExistingNum = 0;
 
 let notEnoughFlag = false; // not enough 15
-let notTodayFlag = false; // not today
 
-
-class algoliaInit extends Subscription {
+class ZhipinTask extends Subscription {
   // 通过 schedule 属性来设置定时任务的执行间隔等配置
   static get schedule() {
     return {
       immediate: false,
-      cron: '0 0 */4 * * *',
       type: 'worker', // 指定所有的 worker 都需要执行
+      disable: true,
     };
   }
-  /**
-   * get yesterday data
-   */
+
+  // subscribe 是真正定时任务执行时被运行的函数
   async subscribe() {
     this.remote(currentPage);
   }
-  /**
-   * get Page
-   */
   async remote() {
     try {
+      const { ctx } = this;
       if (notEnoughFlag) {
+        console.log('notEnoughFlag, stop');
+        this.stop();
+        return;
+      }
+      if (ctx.app.zhipinCache.executedFlag === false) {
         console.log('notEnoughFlag, stop');
         return;
       }
-      if (notTodayFlag) {
-        console.log('notTodayFlag, stop');
-        return;
-      }
-      const { ctx } = this;
-      const res = await ctx.service.lagou.remoteList(currentPage, '成都', 'web前端');
+      const res = await ctx.service.zhipin.remoteList(currentPage, '101270100', 'web前端');
       if (res.list.length) {
         await this.findAndUpadte(res.list);
-        if (res.list.length !== 15) {
-          console.log('not enough 15!!!!!');
-          notEnoughFlag = true;
-        }
+      } else {
+        console.log('res.list.length 0!!!!!');
+        notEnoughFlag = true;
       }
-      await this.sleep(120000, 'remote');
+      await this.sleep(30000, 'remote');
       currentPage += 1;
       this.remote();
     } catch (err) {
       console.log(err);
-      // await this.sleep(600000);
     }
   }
   /**
@@ -62,9 +55,6 @@ class algoliaInit extends Subscription {
     const { ctx } = this;
     const client = await ctx.service.mongodb.client();
     for (let i = 0, len = arr.length; i < len; i++) {
-      if (moment(arr[i].createTime).date() !== moment().date()) {
-        notTodayFlag = true;
-      }
       arr[i].update_time = new Date();
       const insertRes = await client.collection('jobs').findOneAndUpdate({ positionId: arr[i].positionId }, {
         $set: arr[i],
@@ -76,8 +66,11 @@ class algoliaInit extends Subscription {
       if (insertRes.ok) console.log(`page:${currentPage}/${totalPage},alreadyNum:${updatedExistingNum}: ${arr[i].companyFullName} | ${arr[i].positionName}`);
     }
   }
-  sleep(time = 60000, info = '') {
-    console.log(info + 'wait' + time);
+  stop() {
+    this.ctx.app.zhipinCache.executedFlag = false;
+  }
+  sleep(time = 5000, info = '') {
+    if (info) { console.log(info + 'wait' + time); }
     return new Promise(resolve => {
       setTimeout(() => {
         resolve();
@@ -86,4 +79,4 @@ class algoliaInit extends Subscription {
   }
 }
 
-module.exports = algoliaInit;
+module.exports = ZhipinTask;
