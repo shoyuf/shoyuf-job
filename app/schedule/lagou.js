@@ -30,11 +30,17 @@ class algoliaInit extends Subscription {
    */
   async remote() {
     try {
+      if (this.ctx.app.lagouCache.executedFlag === false) {
+        console.log('stopFlag, stop');
+        return;
+      }
       if (notEnoughFlag) {
+        this.stopTask();
         console.log('notEnoughFlag, stop');
         return;
       }
       if (notTodayFlag) {
+        this.stopTask();
         console.log('notTodayFlag, stop');
         return;
       }
@@ -51,9 +57,13 @@ class algoliaInit extends Subscription {
       currentPage += 1;
       this.remote();
     } catch (err) {
+      this.stopTask();
       console.log(err);
       // await this.sleep(600000);
     }
+  }
+  stopTask() {
+    this.ctx.app.lagouCache.executedFlag = false;
   }
   /**
    * @param {array} arr - list

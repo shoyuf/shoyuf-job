@@ -31,7 +31,7 @@ class ZhipinTask extends Subscription {
         return;
       }
       if (ctx.app.zhipinCache.executedFlag === false) {
-        console.log('notEnoughFlag, stop');
+        console.log('stopFlag');
         return;
       }
       const res = await ctx.service.zhipin.remoteList(currentPage, '101270100', 'web前端');
@@ -41,7 +41,7 @@ class ZhipinTask extends Subscription {
         console.log('res.list.length 0!!!!!');
         notEnoughFlag = true;
       }
-      await this.sleep(30000, 'remote');
+      await this.sleep(1000, 'remote');
       currentPage += 1;
       this.remote();
     } catch (err) {

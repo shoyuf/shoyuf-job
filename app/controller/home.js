@@ -19,6 +19,12 @@ class HomeController extends Controller {
   async map(ctx) {
     await ctx.render('map.tpl');
   }
+  async monitor(ctx) {
+    await ctx.render('monitor.tpl', {
+      zhipinStatus: ctx.app.zhipinCache.executedFlag,
+      lagouStatus: ctx.app.lagouCache.executedFlag,
+    });
+  }
 }
 
 module.exports = HomeController;

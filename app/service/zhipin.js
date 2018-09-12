@@ -47,40 +47,46 @@ class Zhipin extends Service {
    *
    */
   async remoteList(pageNum = 1, city = '101270100', keyword = 'web前端') {
-    const { ctx } = this;
-    const res = await ctx.curl(`https://wxapp.zhipin.com/bzminiapp/geek/search/joblist.json?query=${encodeURIComponent(keyword)}&city=${city}&stage=&scale=&industry=&degree=&salary=&experience=&position=&page=${pageNum}&accountId=1006`, {
-      dataType: 'json',
-      headers: {
-        session: ctx.app.zhipinCache.session,
-      },
-    });
-    const list = [];
-    if (res.data.rescode === 1 && res.data.data.list) {
-      const totalCount = -1;
-      const cityName = res.data.data.list[0].cityName;
-      const insertCount = res.data.data.list.length;
-      await this.taskInsert(new Date(), totalCount, cityName, keyword, insertCount);
-      for (let i = 0; i < insertCount; i++) {
-        const el = res.data.data.list[i];
-        const resItem = await this.remoteDetail(el.encryptId, el.lid);
-        if (resItem) {
-          list.push(resItem);
-        } else {
-          this.ctx.app.zhipinCache.executedFlag = false;
-          break;
+    try {
+      const { ctx } = this;
+      const res = await ctx.curl(`https://wxapp.zhipin.com/bzminiapp/geek/search/joblist.json?query=${encodeURIComponent(keyword)}&city=${city}&stage=&scale=&industry=&degree=&salary=&experience=&position=&page=${pageNum}&accountId=1006`, {
+        dataType: 'json',
+        headers: {
+          session: ctx.app.zhipinCache.session,
+        },
+      });
+      const list = [];
+      if (res.data.rescode === 1 && res.data.data.list.length) {
+        const totalCount = -1;
+        const cityName = res.data.data.list[0].cityName || null;
+        const insertCount = res.data.data.list.length;
+        await this.taskInsert(new Date(), totalCount, cityName, keyword, insertCount);
+        for (let i = 0; i < insertCount; i++) {
+          const el = res.data.data.list[i];
+          const resItem = await this.remoteDetail(el.encryptId, el.lid);
+          if (resItem) {
+            list.push(resItem);
+          } else {
+            this.ctx.app.zhipinCache.executedFlag = false;
+            break;
+          }
         }
+      } else {
+        console.log('notEnoughFlag, stop');
+        this.ctx.app.zhipinCache.executedFlag = false;
       }
-    } else {
-      console.log('notEnoughFlag, stop');
+      return { list };
+    } catch (err) {
       this.ctx.app.zhipinCache.executedFlag = false;
+      console.log(err);
+      return { list: [] };
     }
-    return { list };
   }
   async remoteDetail(encryptId, lid) {
     const { ctx } = this;
     await this.sleep(5000);
     if (ctx.app.zhipinCache.executedFlag === false) {
-      console.log('notEnoughFlag, stop');
+      console.log('stopFlag, stop');
       return;
     }
     const res = await ctx.curl(`https://wxapp.zhipin.com/bzminiapp/geek/job/detail.json?accountId=1006&jobId=${encryptId}&lid=${lid}&source=&scene=1001`, {

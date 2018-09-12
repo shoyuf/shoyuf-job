@@ -2,10 +2,7 @@
 
 const Controller = require('egg').Controller;
 
-class HomeController extends Controller {
-  async view(ctx) {
-    await ctx.render('zhipin/view.tpl', { executedFlag: ctx.app.zhipinCache.executedFlag });
-  }
+class ZhipinController extends Controller {
   async start(ctx) {
     const session = ctx.request.body.session || null;
     const testRes = await ctx.service.zhipin.test(session);
@@ -15,6 +12,7 @@ class HomeController extends Controller {
       ctx.body = '已授权，正在执行中！';
       await this.app.runSchedule('zhipin.js');
     } else {
+      ctx.status = 400;
       ctx.body = testRes || 'please input session';
     }
   }
@@ -25,4 +23,4 @@ class HomeController extends Controller {
   }
 }
 
-module.exports = HomeController;
+module.exports = ZhipinController;
