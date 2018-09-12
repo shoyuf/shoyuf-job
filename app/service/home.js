@@ -16,6 +16,10 @@ class HomeService extends Service {
         latitude: 1,
         longitude: 1,
         jobFrom: 1,
+        salary_min: 1,
+        salary_max: 1,
+        workYear: 1,
+        companyShortName: 1,
       },
       limit: pageSize, skip,
       sort: {
