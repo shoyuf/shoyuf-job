@@ -15,7 +15,7 @@ class algoliaInit extends Subscription {
   static get schedule() {
     return {
       immediate: false,
-      cron: '0 0 */4 * * *',
+      cron: '0 0 */8 * * *',
       type: 'worker', // 指定所有的 worker 都需要执行
     };
   }

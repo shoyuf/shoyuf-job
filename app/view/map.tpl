@@ -7,11 +7,11 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Document</title>
   <script src="https://cdn.jsdelivr.net/npm/axios@0.18.0/dist/axios.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/element-ui@2.4.6/lib/index.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.4.6/lib/theme-chalk/index.css">
   <style>
-    [v-clock]{
+    [v-cloak]{
       display:none;
     }
     *{
@@ -43,14 +43,22 @@
       top:10px;
       left:10px;
     }
+    .float>.el-button,
+    .float>.el-select{
+      margin-bottom: 4px;
+    }
+    .el-button+.el-button{
+      margin-left:0;
+    }
   </style>
 </head>
 
 <body>
   <div id="app">
     <div class="float">
-      <el-button @click="addAll" size="mini" v-clock>添加所有标记</el-button>
-      <el-select v-model="low_salary" placeholder="请选择最低薪资" size="mini">
+      <el-button @click="removeBlackList" size="mini" v-cloak type="danger">清除屏蔽记录</el-button>
+      <el-button @click="addAll" size="mini" v-cloak>添加所有标记</el-button>
+      <el-select v-model="low_salary" placeholder="请选择期望最低薪资" size="mini">
         <el-option :value="0"></el-option>
         <el-option
           v-for="i in 20"
@@ -60,8 +68,7 @@
       </el-select>
       <el-select v-model="workYear" placeholder="请选择年资" size="mini">
         <el-option value="全部"></el-option>
-        <el-option value="1-3年"></el-option>
-        <el-option value="3-5年"></el-option>
+        <el-option v-for="n in workYearList" :key="n" :value="n"></el-option>
       </el-select>
       <el-button icon="el-icon-search" circle size="mini" @click="filter"></el-button>
     </div>
@@ -77,8 +84,9 @@
           blackList:JSON.parse(localStorage.getItem('blackList')) || [],
           list: null,
           filterList:[],
-          low_salary:0,
-          workYear:'全部'
+          low_salary:null,
+          workYear:null,
+          workYearList:[]
         }
       },
       watch:{
@@ -87,11 +95,23 @@
         }
       },
       methods:{
+        removeBlackList(){
+          localStorage.removeItem('blackList');
+          map.clearMap();
+        },
         addAll(){
           map.clearMap();
           this.addMarks(this.list)
         },
         filter(){
+          if(this.low_salary === null){
+            this.$message.error('请选择期望最低薪资（职位最高薪资一定高于设置的期望最低薪资）');
+            return;
+          }
+          if(this.workYear === null){
+            this.$message.error('请选择年资');
+            return;
+          }
           this.filterList = []
           map.clearMap();
           let cacheArr = []
@@ -106,7 +126,7 @@
           })
           if(this.low_salary !== 0 ){
             cacheArr.forEach(el=>{
-              if(el.salary_max>this.low_salary){
+              if(el.salary_max>=this.low_salary){
                 this.filterList.push(el)
               }
             })
@@ -116,12 +136,14 @@
           this.addMarks(this.filterList)
         },
         addMarks(arr){
+          console.log(arr.length)
           this.blackList.forEach(el=>{
             const findRes = arr.findIndex(ol=>{
               return ol.positionId === el
             })
             arr.splice(findRes,1)
           })
+          console.log(arr.length)
           arr.forEach(el => {
             const longitude = parseFloat(el.longitude, 10)
             const latitude = parseFloat(el.latitude, 10)
@@ -137,7 +159,7 @@
                 const h = this.$createElement;
                 const childNodes = []
                 childNodes.push(h('el-button',{
-                  props:{size:'mini'},
+                  props:{size:'mini',type:'danger'},
                   on: {click:()=>{
                     // remove marker
                     map.remove(marker)
@@ -187,6 +209,11 @@
         async getList(){
           const res = await axios.get('/resources')
           this.list = res.data.list
+          this.list.forEach(el=>{
+            if(!this.workYearList.includes(el.workYear)){
+              this.workYearList.push(el.workYear)
+            }
+          })
         }
       },
       mounted(){
