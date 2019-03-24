@@ -9,15 +9,30 @@
 <body>
   <form method="post">
     <fieldset>
-      <legend>zhipin: {{zhipinStatus}}</legend>
-      <input type="text" name="session" value="" required>
-      <button type="submit" formaction="/zhipin/start" {{ "disabled" if zhipinStatus else "" }}>start</button>
-      <button type="submit" formaction="/zhipin/stop" {{ "" if zhipinStatus else "disabled" }}>stop</button>
+      <legend>zhipin: 
+        {% if zhipinStatus %}
+          已授权，正在执行中！
+        {% else %}
+          已停止
+        {% endif %}
+      </legend>
+      <input type="text" name="session" value="">
+      <button type="submit" formaction="/zhipin/start" {{ "disabled" if zhipinStatus else "" }}>Start Get List</button>
+      <button type="submit" formaction="/zhipin/items/start" {{ "disabled" if zhipinStatus else "" }}>Start Get Items</button>
+      <button type="submit" formaction="/zhipin/stop" {{ "" if zhipinStatus else "disabled" }}>Stop</button>
     </fieldset>
+  </form>
+  <form method="post">
     <fieldset>
-      <legend>lagou: {{lagouStatus}}</legend>
-      <button type="submit" formaction="/lagou/start" {{ "disabled" if lagouStatus else "" }}>start</button>
-      <button type="submit" formaction="/lagou/stop" {{ "" if lagouStatus else "disabled" }}>stop</button>
+      <legend>lagou:
+      {% if lagouStatus %}
+          已授权，正在执行中！
+        {% else %}
+          已停止
+        {% endif %}
+      </legend>
+      <button type="submit" formaction="/lagou/start" {{ "disabled" if lagouStatus else "" }}>Start</button>
+      <button type="submit" formaction="/lagou/stop" {{ "" if lagouStatus else "disabled" }}>Stop</button>
     </fieldset>
   </form>
 </body>

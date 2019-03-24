@@ -86,10 +86,9 @@ class LagouService extends Service {
         list,
       };
     }
-      this.ctx.app.lagouCache.executedFlag = false
-      console.log('返回数据错误！', res.data);
-      return { list: [] };
-    
+    this.ctx.app.lagouCache.executedFlag = false;
+    console.log('返回数据错误！', res.data);
+    return { list: [] };
   }
   /**
    * @param {DateTime} create_time - 创建时间

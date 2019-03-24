@@ -1,8 +1,5 @@
-[![SHOYUF-JOB](./logo.png)](https://github.com/shoyuf/shoyuf-job)
-
-![platform](https://img.shields.io/badge/platform-Web-blue.svg)
-
 ## SHOYUF-JOB
+![platform](https://img.shields.io/badge/platform-Web-blue.svg)
 
 一个基于 Egg (Koa2) 开发的职位爬虫
 
@@ -16,20 +13,27 @@
 
 - [x] 基础爬取功能
 - [x] 地图展示
+  1. 屏蔽职位，数据本地保存
+  2. 收藏职位，高亮显示
+  3. 根据薪资、工作经验筛选职位，显示职位数量
+  4. 添加离家范围覆盖层，覆盖层数据本地保存
+  5. 职位点数据聚合
 - [x] 定时任务
 - [x] 数据库字段文档
-- [ ] 爬虫进度
-- [ ] 配置文件
+- [x] 后台数据列表
+- [x] 爬虫进度
+- [x] 配置文件
 - [x] 其他招聘网站
 - [ ] 单元测试
 - [ ] 代码部署
-- [ ] 优化代码
 - [ ] JSDoc
 - [ ] APIDoc
+- [ ] 优化代码
 
 ### 界面
 
 ![screenshot](./screenshot.png)
+![screenshot-detail](./screenshot-detail.png)
 
 ### 使用调试
 
@@ -81,7 +85,7 @@
 - [Egg](https://eggjs.org/)
 - [MongoDB](https://www.mongodb.com/)
 - [axios](https://github.com/axios/axios)
-- [Element](https://element-cn.eleme.io/)
+- [Ant Design Vue](https://vue.ant.design/)
 
 ### License
 

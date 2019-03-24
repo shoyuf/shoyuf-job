@@ -5,227 +5,156 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Document</title>
+  <title>Map</title>
   <script src="https://cdn.jsdelivr.net/npm/axios@0.18.0/dist/axios.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/element-ui@2.4.6/lib/index.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.4.6/lib/theme-chalk/index.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ant-design-vue@1.3.7/dist/antd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ant-design-vue@1.3.7/dist/antd.min.css">
   <style>
-    [v-cloak]{
-      display:none;
-    }
-    *{
-      padding:0;margin:0;
-    }
-    html,body{
-      background-color:#fff;
-    }
-    #container {width:100vw; height: 100vh; }  
-    .map-icon{
-      width:12px;
-      height:12px;
-      border:1px solid #666;
-      border-radius:100%;
-    }
-    .map-icon.lagou{
-      background:#00b38a;
-    }
-    .map-icon.zhipin{
-      background:#f33333;
-    }
-    .resource-item{
-      max-height: 70vh;
-      overflow: auto;
-    }
-    .float{
-      position: fixed;
-      z-index: 9;
-      top:10px;
-      left:10px;
-    }
-    .float>.el-button,
-    .float>.el-select{
-      margin-bottom: 4px;
-    }
-    .el-button+.el-button{
-      margin-left:0;
-    }
-  </style>
+    [v-cloak] {
+        display: none;
+      }
+      * {
+        padding: 0;
+        margin: 0;
+      }
+      body,
+      html {
+        background-color: #fff;
+        position:relative;
+      }
+      #container {
+        width: 100vw;
+        height: 100vh;
+        position: absolute;
+        left:0;
+        right:0;
+      }
+      .map-icon.lagou,
+      .map-icon.zhipin {
+        width: 12px;
+        height: 12px;
+        border: 1px solid #666;
+        border-radius: 100%;
+      }
+      .map-icon.lagou {
+        background: #00b38a;
+      }
+      .map-icon.zhipin {
+        background: #f33333;
+      }
+      .map-icon.favorited {
+        width: 24px;
+        height: 24px;
+        border: none;
+        background: url("data:image/svg+xml,%3Csvg class='icon' viewBox='0 0 1024 1024' xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cdefs%3E%3Cstyle/%3E%3C/defs%3E%3Cpath d='M626.8 373.3L512 140.6 397.2 373.3c-5.2 10.6-15.4 18-27.1 19.7l-256.7 37.3 185.8 181.1c8.5 8.3 12.4 20.2 10.4 31.9L265.7 899l229.6-120.7c5.2-2.8 11-4.1 16.8-4.1 5.8 0 11.5 1.4 16.8 4.1L758.5 899l-43.9-255.7c-2-11.7 1.9-23.6 10.4-31.9l185.8-181.1L653.9 393c-11.7-1.7-21.8-9.1-27.1-19.7z' fill='%23FFEB3B'/%3E%3Cpath d='M1022.2 394c-4.2-13-15.5-22.5-29.1-24.5L683 324.4l-138.7-281c-6.1-12.3-18.6-20.1-32.3-20.1s-26.2 7.8-32.3 20.1L341 324.4 30.8 369.5C17.3 371.5 6 381 1.8 394c-4.2 13-.7 27.3 9.1 36.9l224.4 218.8-53 308.9c-2.3 13.5 3.2 27.2 14.3 35.2 11.1 8.1 25.8 9.1 37.9 2.7L512 850.7l277.4 145.9c5.3 2.8 11 4.1 16.7 4.1 7.5 0 14.9-2.3 21.2-6.9 11.1-8.1 16.6-21.7 14.3-35.2l-53-308.9L1013 430.9c9.9-9.6 13.5-23.9 9.2-36.9zM724.9 611.3c-8.5 8.3-12.4 20.2-10.4 31.9l43.9 255.7-229.6-120.7c-5.2-2.8-11-4.1-16.8-4.1-5.8 0-11.5 1.4-16.8 4.1L265.6 898.9l43.9-255.7c2-11.7-1.9-23.6-10.4-31.9l-185.7-181L370.1 393c11.7-1.7 21.9-9.1 27.1-19.7L512 140.6l114.8 232.6c5.2 10.6 15.4 18 27.1 19.7l256.7 37.3-185.7 181.1z' fill='%23FF9800'/%3E%3C/svg%3E") no-repeat;
+        transform: translate(-7px,-8px);
+      }
+      .resource-item {
+        max-height: 70vh;
+        overflow: auto;
+      }
+      .fixed-top {
+        position: fixed;
+        z-index: 9;
+        padding: 10px 15px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fffc;
+        border: #b2b2b2;
+      }
+      .flex {
+        display: flex;
+        align-items: center;
+      }
+      .flex.space-between {
+        justify-content: space-between;
+      }
+    </style>
 </head>
 
 <body>
+  <div id="container"></div>
   <div id="app">
-    <div class="float">
-      <el-button @click="removeBlackList" size="mini" v-cloak type="danger">清除屏蔽记录</el-button>
-      <el-button @click="addAll" size="mini" v-cloak>添加所有标记</el-button>
-      <el-select v-model="low_salary" placeholder="请选择期望最低薪资" size="mini">
-        <el-option :value="0"></el-option>
-        <el-option
-          v-for="i in 20"
-          :key="i"
-          :value="i">
-        </el-option>
-      </el-select>
-      <el-select v-model="workYear" placeholder="请选择年资" size="mini">
-        <el-option value="全部"></el-option>
-        <el-option v-for="n in workYearList" :key="n" :value="n"></el-option>
-      </el-select>
-      <el-button icon="el-icon-search" circle size="mini" @click="filter"></el-button>
+    {% raw %}
+    <div class="fixed-top" v-cloak>
+      <div class="left">
+        <span>
+          <a-tag :color="randomColor">
+            Jobs {{markersNum}} ⭐{{ favoriteList.length }} ❗{{blockedList.length}}
+          </a-tag>
+        </span>
+        <a-popconfirm title="您确认要清空屏蔽记录？该操作无法恢复" @confirm="emptyBlockedList" ok-text="Yes" cancel-text="No">
+          <a-button size="small" v-cloak type="danger">清空屏蔽记录</a-button>
+        </a-popconfirm>
+        <a-button size="small" @click="addAllMarkers" type="primary" v-cloak>添加所有标记</a-button>
+        <a-select v-model="low_salary" placeholder="最低薪资" size="small" style="width: 120px;">
+          <a-select-option :key="0">0</a-select-option>
+          <a-select-option v-for="i in 20" :key="i">
+            {{i}}
+          </a-select-option>
+        </a-select>
+        <a-select v-model="jobExperience" placeholder="工作经验" size="small" style="width: 120px;">
+          <a-select-option key="全部">全部</a-select-option>
+          <a-select-option v-for="n in jobExperienceList" :key="n">
+            {{n}}
+          </a-select-option>
+        </a-select>
+        <a-button icon="search" type="primary" shape="circle" size="small" @click="filter"></a-button>
+      </div>
+      <div class="right">
+        <a-switch @change='toggleHomeMarker' size="small" />
+      </div>
     </div>
-    <div id="container"></div>
+
+    <a-drawer :title="jobDetail.companyFullName" placement="right" :visible="drawerVisible" :mask-style="{
+            backgroundColor:'#fffc',
+          }"
+      @close="drawerVisible = false" width="400">
+      <p class="flex space-between">
+        <a-button type="primary" @click="toggleFavoriteJob" size="small">{{jobDetail.favorited ? '取消收藏':'收藏'}}职位</a-button>
+        <a-button type="danger" @click="blockJob" size="small">{{jobDetail.blocked ? '取消屏蔽':'屏蔽'}}职位</a-button>
+      </p>
+      <p>
+        {{jobDetail.jobFrom==='zhipin'?'Boss直聘':'拉勾'}}ID:
+        <a v-if="jobDetail.jobFrom==='zhipin'" target="_blank" :href="`https://www.zhipin.com/job_detail/${jobDetail.jobId}.html`">{{jobDetail.jobId}}</a>
+        <a v-else target="_blank" href="#">{{jobDetail.jobId}}</a>
+      </p>
+      <p>
+        {{jobDetail.companyShortName}} - {{jobDetail.jobName}} - 状态：{{jobDetail.remoteStatus}}
+        <a :href="`https://www.tianyancha.com/search?key=${jobDetail.companyFullName}`" target="_blank">天眼查</a>
+      </p>
+      <p>所属区县：{{jobDetail.districtName}}</p>
+      <p>工作经验：{{jobDetail.jobExperience}}</p>
+      <p>学历要求：{{jobDetail.degreeName}}</p>
+      <p>薪资描述：{{jobDetail.salaryDesc}}</p>
+      <p style="white-space: pre-wrap;">岗位描述：
+        {{jobDetail.jobDesc}}
+      </p>
+      <p>团队描述：{{jobDetail.teamDesc || '-'}}</p>
+      <p>
+        工作技能：<a-tag :color="randomColor" v-for="n in jobDetail.requiredSkills" :key="n">{{n}}</a-tag>
+      </p>
+      <p>工作地址：{{jobDetail.address}}</p>
+      <p>融资规模：{{jobDetail.comStageName || '-'}}</p>
+      <p>公司规模：{{jobDetail.companySize}}</p>
+      <p>
+        公司标签：<a-tag :color="randomColor" v-for="n in jobDetail.comLabelList" :key="n">{{n}}</a-tag>
+      </p>
+      <p>行业名称：{{jobDetail.comIndustryName}}</p>
+      <p>职位城市：{{jobDetail.cityName}}</p>
+      <p>最低薪资：{{jobDetail.salary_min}}k</p>
+      <p>最高薪资：{{jobDetail.salary_max}}k</p>
+    </a-drawer>
+    {% endraw %}
   </div>
-  <script src="https://webapi.amap.com/maps?v=1.4.8&key=561e624287cdebd75ad99d43e00c53ef"></script>
-  <script type="text/javascript">
-    let map
-    const app = new Vue({
-      el:'#app',
-      data(){
-        return{
-          blackList:JSON.parse(localStorage.getItem('blackList')) || [],
-          list: null,
-          filterList:[],
-          low_salary:null,
-          workYear:null,
-          workYearList:[]
-        }
-      },
-      watch:{
-        blackList(val){
-          localStorage.setItem('blackList',JSON.stringify(Array.from(new Set(val))))
-        }
-      },
-      methods:{
-        removeBlackList(){
-          localStorage.removeItem('blackList');
-          map.clearMap();
-        },
-        addAll(){
-          map.clearMap();
-          this.addMarks(this.list)
-        },
-        filter(){
-          if(this.low_salary === null){
-            this.$message.error('请选择期望最低薪资（职位最高薪资一定高于设置的期望最低薪资）');
-            return;
-          }
-          if(this.workYear === null){
-            this.$message.error('请选择年资');
-            return;
-          }
-          this.filterList = []
-          map.clearMap();
-          let cacheArr = []
-          this.list.forEach(el=>{
-            if(this.workYear === '全部'){
-              cacheArr.push(el)
-            }else{
-              if(el.workYear === this.workYear){
-                cacheArr.push(el)
-              }
-            }
-          })
-          if(this.low_salary !== 0 ){
-            cacheArr.forEach(el=>{
-              if(el.salary_max>=this.low_salary){
-                this.filterList.push(el)
-              }
-            })
-          }else{
-            this.filterList = cacheArr
-          }
-          this.addMarks(this.filterList)
-        },
-        addMarks(arr){
-          console.log(arr.length)
-          this.blackList.forEach(el=>{
-            const findRes = arr.findIndex(ol=>{
-              return ol.positionId === el
-            })
-            arr.splice(findRes,1)
-          })
-          console.log(arr.length)
-          arr.forEach(el => {
-            const longitude = parseFloat(el.longitude, 10)
-            const latitude = parseFloat(el.latitude, 10)
-            if (!isNaN(longitude) && !isNaN(latitude)) {
-              const marker = new AMap.Marker({
-                map,
-                position: [longitude, latitude], //位置
-                content: `<div class="map-icon ${el.jobFrom}" title="${el.companyShortName}"></div>`
-              })
-              AMap.event.addListener(marker, 'click', async () => {
-                const resItem = await axios.get('/resources/'+el.positionId)
-                const item = resItem.data
-                const h = this.$createElement;
-                const childNodes = []
-                childNodes.push(h('el-button',{
-                  props:{size:'mini',type:'danger'},
-                  on: {click:()=>{
-                    // remove marker
-                    map.remove(marker)
-                    // add localstorage blacklist
-                    this.blackList.push(el.positionId)
-                  }},
-                },'屏蔽该职位'))
-                if(item.companyFullName)childNodes.push(h('p',null,`公司全称：${item.companyFullName}`))
-                if(item.positionName)childNodes.push(h('p',null,`职位名称：${item.positionName}`))
-                if(item.salary_min&&item.salary_max)childNodes.push(h('p',null,`薪资水平：${item.salary_min}-${item.salary_max}`))
-                if(item.companyLabelList)childNodes.push(h('p',null,`公司标签：${item.companyLabelList.toString()}`))
-                if(item.companySize)childNodes.push(h('p',null,`公司人数：${item.companySize}`))
-                if(item.district)childNodes.push(h('p',null,`公司所在区县：${item.district}`))
-                if(item.education)childNodes.push(h('p',null,`学历要求：${item.education}`))
-                if(item.createTime)childNodes.push(h('p',null,`发布时间：${item.createTime}`))
-                if(item.update_time)childNodes.push(h('p',null,`更新时间：${item.update_time}`))
-                if(item.positionAdvantage)childNodes.push(h('p',null,`公司优势：${item.positionAdvantage}`))
-                if(item.subwayline)childNodes.push(h('p',null,`地铁线：${item.subwayline}`))
-                if(item.stationname)childNodes.push(h('p',null,`地铁站：${item.stationname}`))
-                if(item.workYear)childNodes.push(h('p',null,`年资：${item.workYear}`))
-                if(item.desc)childNodes.push(h('p',null,`描述：${item.desc}`))
-                if(item.address)childNodes.push(h('p',null,`地址：${item.address}`))
-                if(item.url)childNodes.push(h('p',null,[
-                  h('span',null,'URL: '),
-                  h('a',{
-                    attrs:{
-                      href:item.url,
-                      target:'_blank',
-                    }
-                  },item.jobFrom)
-                ]))
-                const vnode = h('div',null,childNodes)
-                this.$msgbox({
-                  title:`${item.companyShortName}`,
-                  message:vnode,
-                  dangerouslyUseHTMLString:true,
-                  showCancelButton: true,
-                  showConfirmButton: false,
-                  customClass:'resource-item'
-                }).then(()=>{
-                }).catch(()=>{
-                });
-              });
-            }
-          })
-        },
-        async getList(){
-          const res = await axios.get('/resources')
-          this.list = res.data.list
-          this.list.forEach(el=>{
-            if(!this.workYearList.includes(el.workYear)){
-              this.workYearList.push(el.workYear)
-            }
-          })
-        }
-      },
-      mounted(){
-        map = new AMap.Map('container', {
-          mapStyle: 'amap://styles/c4df92f5249831f6e56519481f366553',
-          center: [104.0655899048, 30.6565202250],
-          zoom: 12
-        });
-        this.getList()
-      }
-    })
-  </script>
+  <script src="https://webapi.amap.com/maps?v=1.4.8&key=561e624287cdebd75ad99d43e00c53ef&plugin=AMap.CircleEditor,AMap.MarkerClusterer"></script>
+  <script src="/public/js/map.js"></script>
 </body>
 
 </html>

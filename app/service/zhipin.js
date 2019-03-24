@@ -14,38 +14,8 @@ class Zhipin extends Service {
     if (res.data.rescode === 1) {
       return true;
     }
-    return res.data.resmsg;
+    return res.data;
   }
-  /**
-   *
-   * @param {int} pageNum - 页码
-   * @param {string} city - 城市
-   * @param {string} keyword - 职位关键字
-   * @return { array } list - 标准列表
-   * @return { string } list[].city - 城市
-   * @return { int } list[].companyId - 公司ID
-   * @return { string } list[].companyFullName - 公司全称
-   * @return { string } list[].companyShortName - 公司简称
-   * @return { array } list[].companyLabelList - 公司标签
-   * @return { string } list[].companyLogo - + '//www.lgstatic.com/thumbnail_120x120/'
-   * @return { string } list[].companySize - 公司人数
-   * @return { string } list[].district - 公司所在区县
-   * @return { string } list[].education - 学历要求
-   * @return { string } list[].createTime - 发布时间 JS Date
-   * @return { string } list[].latitude - 纬度
-   * @return { string } list[].longitude - 经度
-   * @return { string } list[].positionAdvantage - 公司优势 "技术大牛带,年底奖金,公司高速发"
-   * @return { string } list[].positionId - 职位ID 判断重复
-   * @return { string } list[].positionName - 职位名称
-   * @return { int } list[].salary_min - 最低薪资
-   * @return { int } list[].salary_max - 最高薪资
-   * @return { string } list[].subwayline - 地铁线
-   * @return { string } list[].stationname - 地铁站
-   * @return { string } list[].workYear - 年资
-   * @return { string } list[].jobFrom - 来自
-   * @return { string } list[].url - url
-   *
-   */
   async remoteList(pageNum = 1, city = '101270100', keyword = 'web前端') {
     try {
       const { ctx } = this;
@@ -55,94 +25,85 @@ class Zhipin extends Service {
           session: ctx.app.zhipinCache.session,
         },
       });
-      const list = [];
-      if (res.data.rescode === 1 && res.data.data.list.length) {
-        const totalCount = -1;
-        const cityName = res.data.data.list[0].cityName || null;
-        const insertCount = res.data.data.list.length;
-        await this.taskInsert(new Date(), totalCount, cityName, keyword, insertCount);
-        for (let i = 0; i < insertCount; i++) {
-          const el = res.data.data.list[i];
-          const resItem = await this.remoteDetail(el.encryptId, el.lid);
-          if (resItem) {
-            list.push(resItem);
-          } else {
-            this.ctx.app.zhipinCache.executedFlag = false;
-            break;
-          }
-        }
+      /**
+       * @returns { Object } {rescode:int,resmsg:str,data:object[list:arr,hasMore:boolean]}
+       * @return.list[jobName] 职位名称
+       * @return.list[jobValidStatus] {int} 有效状态
+       * @return.list[jobExperience] 职位经验
+       * @return.list[jobDegree] 学历需求
+       * @return.list[jobSalary] 薪资
+       * @return.list[cityName] 城市名称
+       * @return.list[lid] 查询职位详情需要用的lid
+       * @return.list[brandName] 品牌名称
+       * @return.list[brandLogo] 品牌logo
+       * @return.list[bossName] boss名称
+       * @return.list[bossTitle] boss title
+       * @return.list[bossAvatar] boss头像
+       * @return.list[encryptId] 查询职位详情需要用的encryptId,也就是jobId
+       */
+      if (res.data.rescode === 1) {
+        return { list: res.data.data.list || [], msg: res.data };
       } else {
-        console.log('notEnoughFlag, stop');
-        this.ctx.app.zhipinCache.executedFlag = false;
+        return { list: [], msg: res.data };
       }
-      return { list };
     } catch (err) {
-      this.ctx.app.zhipinCache.executedFlag = false;
-      console.log(err);
-      return { list: [] };
+      return { list: [], msg: err };
     }
   }
   async remoteDetail(encryptId, lid) {
     const { ctx } = this;
-    await this.sleep(5000);
-    if (ctx.app.zhipinCache.executedFlag === false) {
-      console.log('stopFlag, stop');
-      return;
+    try {
+      if (ctx.app.zhipinCache.executedFlag === false) {
+        console.log('stopFlag, stop');
+        return;
+      }
+      const res = await ctx.curl(`https://wxapp.zhipin.com/bzminiapp/geek/job/detail.json?accountId=1006&jobId=${encryptId}&lid=${lid}&source=&scene=1001`, {
+        dataType: 'json',
+        headers: {
+          session: ctx.app.zhipinCache.session,
+        },
+      });
+      /**
+       * @returns { Object } {rescode:int,resmsg:str,data:object[bossBaseInfoVO,jobBaseInfoVo,brandComInfoVo,headhunterInfoVo,realationInfoVo]}
+       * @return.bossBaseInfoVO teamDesc 团队简介
+       * @return.bossBaseInfoVO teamLureList { Array } 团队tag
+       * @return.bossBaseInfoVO encryptBossId bossID
+       * @return.jobBaseInfoVO jobId JobID
+       * @return.jobBaseInfoVO expectId unknow
+       * @return.jobBaseInfoVO jobValidStatus { Int } 职位状态
+       * @return.jobBaseInfoVO positionName 职位名称
+       * @return.jobBaseInfoVO locationName 城市名称
+       * @return.jobBaseInfoVO areaDistrict 所属区县
+       * @return.jobBaseInfoVO businessDistrict 所属商业区
+       * @return.jobBaseInfoVO experienceName 职位经验 1-3年
+       * @return.jobBaseInfoVO degreeName 学历要求
+       * @return.jobBaseInfoVO lowSalary { int } 最低薪资
+       * @return.jobBaseInfoVO highSalary { int } 最高薪资
+       * @return.jobBaseInfoVO jobDesc 职位描述
+       * @return.jobBaseInfoVO requiredSkills { Array } 所需技能
+       * @return.jobBaseInfoVO address 地址
+       * @return.jobBaseInfoVO longitude { int } 经度
+       * @return.jobBaseInfoVO latitude { int } 纬度
+       * @return.jobBaseInfoVO salaryDesc 薪资描述文本
+       * @return.brandComInfoVO brandName 品牌名称
+       * @return.brandComInfoVO industryName 产业名称
+       * @return.brandComInfoVO stageName 融资状态
+       * @return.brandComInfoVO scaleName 公司人数规模
+       * @return.brandComInfoVO comName 公司全称
+       * @return.brandComInfoVO encryptBrandId 公司ID
+       * @return.headhunterInfoVo 猎头信息
+       * @return.realationInfoVo 关系信息
+       */
+      if (res.data.rescode === 1) {
+        console.log(`gotRemoteDetail: ${res.data.data.brandComInfoVO.comName} | ${res.data.data.jobBaseInfoVO.positionName} - ${encryptId}`);
+        return { item: res.data.data };
+      } else {
+        // 1001 未授权 || 被风控 || 3001 职位不存在
+        return { item: null, msg: Object.assign(res.data, { encryptId }) };
+      }
+    } catch (err) {
+      return { item: null, msg: err };
     }
-    const res = await ctx.curl(`https://wxapp.zhipin.com/bzminiapp/geek/job/detail.json?accountId=1006&jobId=${encryptId}&lid=${lid}&source=&scene=1001`, {
-      dataType: 'json',
-      headers: {
-        session: ctx.app.zhipinCache.session,
-      },
-    });
-    if (res.data.rescode === 1) {
-      console.log(`getRemoteDetail: ${res.data.data.brandComInfoVO.comName} | ${res.data.data.jobBaseInfoVO.positionName} - ${encryptId}`);
-      return {
-        city: res.data.data.jobBaseInfoVO.locationName,
-        companyId: res.data.data.brandComInfoVO.encryptBrandId,
-        companyFullName: res.data.data.brandComInfoVO.comName,
-        companyShortName: res.data.data.brandComInfoVO.brandName,
-        companyLabelList: res.data.data.bossBaseInfoVO.teamLureList,
-        companyLogo: res.data.data.brandComInfoVO.logo,
-        companySize: res.data.data.brandComInfoVO.scaleName,
-        district: res.data.data.jobBaseInfoVO.areaDistrict,
-        education: res.data.data.jobBaseInfoVO.degreeName,
-        createTime: null,
-        latitude: res.data.data.jobBaseInfoVO.latitude,
-        longitude: res.data.data.jobBaseInfoVO.longitude,
-        positionAdvantage: null,
-        positionId: encryptId,
-        positionName: res.data.data.jobBaseInfoVO.positionName,
-        salary_min: res.data.data.jobBaseInfoVO.lowSalary,
-        salary_max: res.data.data.jobBaseInfoVO.highSalary,
-        subwayline: null,
-        stationname: null,
-        workYear: res.data.data.jobBaseInfoVO.experienceName,
-        jobFrom: 'zhipin',
-        desc: res.data.data.jobBaseInfoVO.jobDesc,
-        address: res.data.data.jobBaseInfoVO.address,
-        url: `https://www.zhipin.com/job_detail/?query=${encodeURIComponent(res.data.data.brandComInfoVO.comName)}`,
-      };
-    }
-    return;
-  }
-  /**
-   * @param {DateTime} create_time - 创建时间
-   * @param {int} totalCount - 总数
-   * @param {string} city - 城市
-   * @param {string} keyword - 关键字
-   * @param {string} insertCount - 此次总数
-   */
-  async taskInsert(create_time, totalCount, city, keyword, insertCount) {
-    const client = await this.ctx.service.mongodb.client();
-    await client.collection('logs').insertOne({
-      type: 'zhipin',
-      create_time,
-      totalCount,
-      city,
-      keyword,
-      insertCount,
-    });
   }
   sleep(time = 5000, info = '') {
     if (info) { console.log(info + 'wait' + time); }
@@ -151,6 +112,10 @@ class Zhipin extends Service {
         resolve();
       }, time);
     });
+  }
+  stop() {
+    console.log('stop!!!! info ⬆️');
+    this.ctx.app.zhipinCache.executedFlag = false;
   }
 }
 

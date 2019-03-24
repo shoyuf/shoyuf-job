@@ -10,7 +10,9 @@ module.exports = app => {
   router.get('/map', controller.home.map);
   router.get('/monitor', controller.home.monitor);
   router.post('/zhipin/start', controller.zhipin.start);
+  router.post('/zhipin/items/start', controller.zhipin.startItems);
   router.post('/zhipin/stop', controller.zhipin.stop);
   router.post('/lagou/start', controller.lagou.start);
   router.post('/lagou/stop', controller.lagou.stop);
+  router.resources('adminResources', '/admin/resources', controller.admin.resources);
 };
