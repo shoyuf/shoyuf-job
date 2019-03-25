@@ -17,8 +17,9 @@
         {% endif %}
       </legend>
       <input type="text" name="session" value="">
-      <button type="submit" formaction="/zhipin/start" {{ "disabled" if zhipinStatus else "" }}>Start Get List</button>
-      <button type="submit" formaction="/zhipin/items/start" {{ "disabled" if zhipinStatus else "" }}>Start Get Items</button>
+      <button type="submit" formaction="/zhipin/start" {{ "disabled" if zhipinStatus else "" }}>1. Start Get List</button>
+      <button type="submit" formaction="/zhipin/items/start" {{ "disabled" if zhipinStatus else "" }}>2. Start Get Items</button>
+      <button type="submit" formaction="/zhipin/items/update" {{ "disabled" if zhipinStatus else "" }}>3. Update Older Items Status</button>
       <button type="submit" formaction="/zhipin/stop" {{ "" if zhipinStatus else "disabled" }}>Stop</button>
     </fieldset>
   </form>

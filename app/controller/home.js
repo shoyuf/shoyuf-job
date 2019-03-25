@@ -4,7 +4,7 @@ const Controller = require('egg').Controller;
 
 class HomeController extends Controller {
   async list(ctx) {
-    const res = await ctx.service.home.list(1);
+    const res = await ctx.service.home.list(1, ctx.query);
     ctx.body = { list: res, pageInfo: res.pageInfo, filters: res.filters };
   }
   async item(ctx) {

@@ -115,7 +115,7 @@
     <a-drawer :title="jobDetail.companyFullName" placement="right" :visible="drawerVisible" :mask-style="{
             backgroundColor:'#fffc',
           }"
-      @close="drawerVisible = false" width="400">
+      @close="drawerVisible = false" width="400" v-cloak>
       <p class="flex space-between">
         <a-button type="primary" @click="toggleFavoriteJob" size="small">{{jobDetail.favorited ? '取消收藏':'收藏'}}职位</a-button>
         <a-button type="danger" @click="blockJob" size="small">{{jobDetail.blocked ? '取消屏蔽':'屏蔽'}}职位</a-button>

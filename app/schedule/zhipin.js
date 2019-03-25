@@ -7,9 +7,11 @@ let currentPage,
 const keyword = 'web前端';
 /**
  * @var jobStatus
- * 1:被手动删除
+ * 0:被手动删除
  * 1:无详情
  * 2:有详情
+ * 3:远程职位不存在
+ * 4:远程职位停止招聘
  */
 
 class ZhipinTask extends Subscription {
@@ -64,9 +66,10 @@ class ZhipinTask extends Subscription {
       let updatedCount = 0;
       for (let i = 0; i < totalCount; i++) {
         const el = arr[i];
-        // 列表里面的 jobId 是 encryptId
+        // 列表里面的 encryptId 是 jobId
         const salary_min = el.jobSalary.match(/\d+/g) ? el.jobSalary.match(/\d+/g)[0] : null;
         const salary_max = el.jobSalary.match(/\d+/g) ? el.jobSalary.match(/\d+/g)[1] : null;
+        const jobStatus = el.jobValidStatus === 1 ? 1 : el.jobValidStatus === 2 ? 4 : `0_${el.jobValidStatus}`;
         const findRes = await client.collection('jobs').findOneAndUpdate({ jobId: el.encryptId }, {
           $set: {
             zhipin_cache_lid: el.lid,
@@ -86,7 +89,7 @@ class ZhipinTask extends Subscription {
           $currentDate: { update_time: true },
           $setOnInsert: {
             create_time: new Date(),
-            jobStatus: el.jobValidStatus === 1 ? 1 : `0_${el.jobValidStatus}`,
+            jobStatus,
           },
         }, {
           upsert: true,
@@ -101,8 +104,8 @@ class ZhipinTask extends Subscription {
       //   console.log('database already existed all');
       //   ctx.service.zhipin.stop();
       // }
-      console.log(`updatedRemoteList: ${totalCount} | updatedData: ${updatedCount} | time: ${new Date()}`);
-      await ctx.service.zhipin.sleep(1000, 'remoteList get wait');
+      console.log(`Updated Remote List: ${totalCount} | updated Data: ${updatedCount} | time: ${new Date()}`);
+      await ctx.service.zhipin.sleep(1000, 'Get Remote List wait');
       addCount = addCount + totalCount - updatedCount;
       currentPage += 1;
       this.remote();

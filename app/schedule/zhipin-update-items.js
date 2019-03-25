@@ -1,10 +1,15 @@
-
-
 'use strict';
 const Subscription = require('egg').Subscription;
-let countNum,
-  timeoutCount,
-  thisCount;
+let countNum, // 已更新总数
+  timeoutCount, // 超时次数
+  thisCount, // 本次更新总数
+  changeCount; // 本次更新成功总数
+
+/**
+ * todo
+ * 1. test session 功能
+ */
+
 /**
  * @var jobStatus
  * 0:被手动删除
@@ -27,21 +32,34 @@ class ZhipinItemsTask extends Subscription {
   async subscribe() {
     countNum = 0;
     timeoutCount = 0;
-    thisCount = 0;
-    this.testCount();
+    changeCount = 0;
+    this.testRecently();
   }
-  async testCount() {
+  async testRecently() {
     const { ctx } = this;
+    const client = await ctx.service.mongodb.client();
     try {
-      const client = await ctx.service.mongodb.client();
+      const recentDay = await client.collection('jobs').findOne({
+        jobFrom: 'zhipin',
+        jobStatus: 2, // 有详情
+      }, {
+        sort: {
+          update_time: -1,
+        },
+      });
+      const _o = new Date(recentDay.update_time);
+      const d = new Date(_o.getFullYear(), _o.getMonth(), _o.getDate());
       thisCount = await client.collection('jobs').countDocuments({
         jobFrom: 'zhipin',
-        jobStatus: 1,
+        jobStatus: 2, // 有详情
+        remoteStatus: 1, // 远程状态正常
+        update_time: { $lt: d },
       });
-      if (thisCount) {
-        this.findAndUpdateDetail();
+      if (recentDay) {
+        console.log(`this update count is ${thisCount} // ${d}`);
+        this.findAndUpdateDetail(d);
       } else {
-        console.log('no more no-detail item!!! stop');
+        console.log('no one item!');
         ctx.service.zhipin.stop();
       }
     } catch (err) {
@@ -49,7 +67,7 @@ class ZhipinItemsTask extends Subscription {
       ctx.service.zhipin.stop();
     }
   }
-  async findAndUpdateDetail() {
+  async findAndUpdateDetail(recentDay) {
     const { ctx } = this;
     try {
       if (ctx.app.zhipinCache.executedFlag === false) {
@@ -57,10 +75,17 @@ class ZhipinItemsTask extends Subscription {
         return;
       }
       const client = await ctx.service.mongodb.client();
-      // find a no-detail item
+      // find a lateset item 上一次更新列表中在列表里面的
+
       const findOneRes = await client.collection('jobs').findOne({
         jobFrom: 'zhipin',
-        jobStatus: 1,
+        jobStatus: 2, // 有详情
+        remoteStatus: 1, // 远程状态正常
+        update_time: { $lt: new Date(recentDay) },
+      }, {
+        sort: {
+          update_time: 1,
+        },
       });
       if (findOneRes) {
         const remoteDetailRes = await ctx.service.zhipin.remoteDetail(findOneRes.jobId, findOneRes.zhipin_cache_lid);
@@ -91,29 +116,29 @@ class ZhipinItemsTask extends Subscription {
           }, {
             upsert: false,
           });
+          if (jobBaseInfoVO.jobValidStatus !== findOneRes.remoteStatus) changeCount++;
           countNum++;
           timeoutCount = 0;
-          console.log(`[${countNum}/${thisCount}]Updated Remote Detail: ${brandComInfoVO.comName} | ${jobBaseInfoVO.positionName} - ${findOneRes.jobId}`);
-          await ctx.service.zhipin.sleep(5000, 'Get Remote Item wait');
-          this.findAndUpdateDetail();
+          console.log(`[${countNum}/${thisCount} | ${changeCount} 😷 ]updated Older Detail: ${brandComInfoVO.comName} | ${findOneRes.jobId} | ${findOneRes.remoteStatus} -> ${jobBaseInfoVO.jobValidStatus}`);
+          await ctx.service.zhipin.sleep(5000, 'Get Older Item Wait');
+          this.findAndUpdateDetail(recentDay);
         } else if (remoteDetailRes.msg.rescode === 3001) {
           console.log(remoteDetailRes.msg);
           timeoutCount = 0;
           await client.collection('jobs').updateOne({ jobId: findOneRes.jobId }, {
             $set: { jobStatus: 3 },
           });
-          await ctx.service.zhipin.sleep(4000, 'Get Remote Item wait');
-          this.findAndUpdateDetail();
+          await ctx.service.zhipin.sleep(4000, 'Get Older Item Wait');
+          this.findAndUpdateDetail(recentDay);
         } else if (timeoutCount < 2) {
           timeoutCount++;
-          this.findAndUpdateDetail();
+          this.findAndUpdateDetail(recentDay);
         } else {
           console.log(remoteDetailRes.msg);
           ctx.service.zhipin.stop();
-
         }
       } else {
-        console.log('no more no-detail item!!! stop');
+        console.log('no more older item!!! stop');
         ctx.service.zhipin.stop();
       }
     } catch (err) {

@@ -11,6 +11,7 @@ module.exports = app => {
   router.get('/monitor', controller.home.monitor);
   router.post('/zhipin/start', controller.zhipin.start);
   router.post('/zhipin/items/start', controller.zhipin.startItems);
+  router.post('/zhipin/items/update', controller.zhipin.updateOlder);
   router.post('/zhipin/stop', controller.zhipin.stop);
   router.post('/lagou/start', controller.lagou.start);
   router.post('/lagou/stop', controller.lagou.stop);

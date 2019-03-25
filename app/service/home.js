@@ -3,15 +3,16 @@
 const Service = require('egg').Service;
 const ObjectId = require('mongodb').ObjectId;
 class HomeService extends Service {
-  async list(currentPage = 1) {
+  async list(currentPage = 1, querys) {
     const { ctx } = this;
+    const { projectionAll } = querys;
     const pageSize = 999;
     const client = await ctx.service.mongodb.client();
     const skip = currentPage === 1 ? 0 : pageSize * (currentPage - 1);
     // const filter = status === 1 ? { status: 1 } : {};
     const filter = { jobStatus: 2 };
     const res = await client.collection('jobs').find(filter, {
-      projection: {
+      projection: projectionAll ? { } : {
         salary_max: 1,
         jobExperience: 1,
         longitude: 1,
@@ -19,25 +20,6 @@ class HomeService extends Service {
         jobId: 1,
         companyShortName: 1,
         jobFrom: 1,
-      //   positionId: 1,
-      //   latitude: 1,
-      //   longitude: 1,
-      //   jobFrom: 1,
-      //   salary_min: 1,
-      //   salary_max: 1,
-      //   workYear: 1,
-      //   companyShortName: 1,
-      //   companyFullName: 1,
-      //   companySize: 1,
-      //   district: 1,
-      //   positionName: 1,
-      //   stationname: 1,
-      //   subwayline: 1,
-      //   update_time: 1,
-      //   create_time: 1,
-      //   url: 1,
-      //   address: 1,
-      //   desc: 1,
       },
       limit: pageSize, skip,
       sort: {
