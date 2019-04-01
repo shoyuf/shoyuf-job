@@ -14,6 +14,8 @@ module.exports = app => {
   router.post('/zhipin/items/update', controller.zhipin.updateOlder);
   router.post('/zhipin/stop', controller.zhipin.stop);
   router.post('/lagou/start', controller.lagou.start);
+  router.post('/lagou/items/start', controller.lagou.startItems);
+  router.post('/lagou/items/update', controller.lagou.updateOlder);
   router.post('/lagou/stop', controller.lagou.stop);
   router.resources('adminResources', '/admin/resources', controller.admin.resources);
 };

@@ -32,9 +32,22 @@
           已停止
         {% endif %}
       </legend>
-      <button type="submit" formaction="/lagou/start" {{ "disabled" if lagouStatus else "" }}>Start</button>
+      <button type="submit" formaction="/lagou/start" {{ "disabled" if lagouStatus else "" }}>Start Get List</button>
+      <button type="submit" formaction="/lagou/items/start" {{ "disabled" if lagouStatus else "" }}>Start Get Items</button>
+      <button type="submit" formaction="/lagou/items/update" {{ "disabled" if lagouStatus else "" }}>Update Older Items Status</button>
       <button type="submit" formaction="/lagou/stop" {{ "" if lagouStatus else "disabled" }}>Stop</button>
     </fieldset>
   </form>
+  <script>
+  {% if zhipinStatus %}
+    setTimeout(()=>{
+      location.reload()
+    },5000)
+  {% elif lagouStatus %}
+    setTimeout(()=>{
+      location.reload()
+    },5000)
+  {% endif %}
+  </script>
 </body>
 </html>

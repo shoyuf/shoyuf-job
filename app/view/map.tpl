@@ -23,27 +23,40 @@
       body,
       html {
         background-color: #fff;
-        position:relative;
+        position: relative;
       }
       #container {
         width: 100vw;
         height: 100vh;
         position: absolute;
-        left:0;
-        right:0;
+        left: 0;
+        right: 0;
+      }
+      .map-icon{
+        position:relative;
+      }
+      .map-icon:hover::after {
+        content: attr(data-name);
+        position: absolute;
+        color: gray;
+        font-size: 12px;
+        display: block;
+        white-space: nowrap;
+        left: 20px;
+        top: 8px;
       }
       .map-icon.lagou,
       .map-icon.zhipin {
         width: 12px;
         height: 12px;
-        border: 1px solid #666;
+        border: 1px solid #666a;
         border-radius: 100%;
       }
       .map-icon.lagou {
-        background: #00b38a;
+        background: #00b38a66;
       }
       .map-icon.zhipin {
-        background: #f33333;
+        background: #f3333366;
       }
       .map-icon.favorited {
         width: 24px;
@@ -74,6 +87,13 @@
       }
       .flex.space-between {
         justify-content: space-between;
+      }
+      label.bold{
+        font-weight:bold;
+        color:#333;
+      }
+      .job-desc p{
+        margin-bottom:0;
       }
     </style>
 </head>
@@ -121,39 +141,90 @@
         <a-button type="danger" @click="blockJob" size="small">{{jobDetail.blocked ? '取消屏蔽':'屏蔽'}}职位</a-button>
       </p>
       <p>
-        {{jobDetail.jobFrom==='zhipin'?'Boss直聘':'拉勾'}}ID:
+        <label for="" class="bold">
+          {{jobDetail.jobFrom==='zhipin'?'Boss直聘':'拉勾'}}ID:
+        </label>
         <a v-if="jobDetail.jobFrom==='zhipin'" target="_blank" :href="`https://www.zhipin.com/job_detail/${jobDetail.jobId}.html`">{{jobDetail.jobId}}</a>
-        <a v-else target="_blank" href="#">{{jobDetail.jobId}}</a>
+        <a v-else target="_blank" :href="`https://www.lagou.com/jobs/${jobDetail.jobId}.html`">{{jobDetail.jobId}}</a>
       </p>
       <p>
         {{jobDetail.companyShortName}} - {{jobDetail.jobName}} - 状态：{{jobDetail.remoteStatus}}
         <a :href="`https://www.tianyancha.com/search?key=${jobDetail.companyFullName}`" target="_blank">天眼查</a>
       </p>
-      <p>所属区县：{{jobDetail.districtName}}</p>
-      <p>工作经验：{{jobDetail.jobExperience}}</p>
-      <p>学历要求：{{jobDetail.degreeName}}</p>
-      <p>薪资描述：{{jobDetail.salaryDesc}}</p>
-      <p style="white-space: pre-wrap;">岗位描述：
-        {{jobDetail.jobDesc}}
-      </p>
-      <p>团队描述：{{jobDetail.teamDesc || '-'}}</p>
       <p>
-        工作技能：<a-tag :color="randomColor" v-for="n in jobDetail.requiredSkills" :key="n">{{n}}</a-tag>
-      </p>
-      <p>工作地址：{{jobDetail.address}}</p>
-      <p>融资规模：{{jobDetail.comStageName || '-'}}</p>
-      <p>公司规模：{{jobDetail.companySize}}</p>
+        <label for="" class="bold">
+          所属区县：
+        </label>
+        {{jobDetail.districtName}}</p>
       <p>
-        公司标签：<a-tag :color="randomColor" v-for="n in jobDetail.comLabelList" :key="n">{{n}}</a-tag>
+        <label for="" class="bold">
+          工作经验：
+        </label>
+        {{jobDetail.jobExperience}}</p>
+      <p>
+        <label for="" class="bold">
+          学历要求：
+        </label>
+        {{jobDetail.degreeName}}</p>
+      <p>
+        <label for="" class="bold">
+          薪资描述：
+        </label>
+        {{jobDetail.salaryDesc}}</p>
+      <p>
+        <label for="" class="bold">
+          岗位描述：
+        </label>
+        <p style="white-space: pre-wrap;" class="job-desc" v-html="jobDetail.jobDesc"></p>
       </p>
-      <p>行业名称：{{jobDetail.comIndustryName}}</p>
-      <p>职位城市：{{jobDetail.cityName}}</p>
-      <p>最低薪资：{{jobDetail.salary_min}}k</p>
-      <p>最高薪资：{{jobDetail.salary_max}}k</p>
+      <p>
+        <label for="" class="bold">
+          团队描述：
+        </label>{{jobDetail.teamDesc || '-'}}</p>
+      <p>
+        <label for="" class="bold">
+          工作技能：
+        </label>
+        <a-tag :color="randomColor" v-for="n in jobDetail.requiredSkills" :key="n">{{n}}</a-tag>
+      </p>
+      <p>
+        <label for="" class="bold">
+          工作地址：
+        </label>{{jobDetail.address}}</p>
+      <p>
+        <label for="" class="bold">
+          融资规模：
+        </label>{{jobDetail.comStageName || '-'}}</p>
+      <p>
+        <label for="" class="bold">
+          公司规模：
+        </label>{{jobDetail.companySize}}</p>
+      <p>
+        <label for="" class="bold">
+          公司标签：
+        </label>
+        <a-tag :color="randomColor" v-for="n in jobDetail.comLabelList" :key="n">{{n}}</a-tag>
+      </p>
+      <p>
+        <label for="" class="bold">
+          行业名称：
+        </label>{{jobDetail.comIndustryName}}</p>
+      <p>
+        <label for="" class="bold">
+          职位城市：
+        </label>{{jobDetail.cityName}}</p>
+      <p>
+        <label for="" class="bold">
+          最低薪资：
+        </label>{{jobDetail.salary_min}}k</p>
+      <p>
+        <label for="" class="bold">
+          最高薪资：
+        </label>{{jobDetail.salary_max}}k</p>
     </a-drawer>
     {% endraw %}
   </div>
-  <script src="https://webapi.amap.com/maps?v=1.4.8&key=561e624287cdebd75ad99d43e00c53ef&plugin=AMap.CircleEditor,AMap.MarkerClusterer"></script>
+  <script src="https://webapi.amap.com/maps?v=1.4.8&key=561e624287cdebd75ad99d43e00c53ef&plugin=AMap.CircleEditor,AMap.MarkerClusterer,AMap.ToolBar"></script>
   <script src="/public/js/map.js"></script>
 </body>
 

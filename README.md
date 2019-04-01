@@ -77,7 +77,7 @@
 - API 来源
   拉勾 | Boss直聘
   - | -
-  Web | WeChat Mini Program
+  WeChat Mini Program | WeChat Mini Program
 
  
 ### 鸣谢

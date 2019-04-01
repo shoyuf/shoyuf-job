@@ -1,99 +1,132 @@
 'use strict';
-
 const Subscription = require('egg').Subscription;
-const moment = require('moment');
-let currentPage = 1;
-const totalPage = 'unknown';
-let updatedExistingNum = 0;
+let currentPage,
+  addCount,
+  getCount;
+const keyword = 'web前端';
+/**
+ * @var jobStatus
+ * 0:被手动删除
+ * 1:无详情
+ * 2:有详情
+ * 3:远程职位不存在
+ * 4:远程职位停止招聘
+ */
 
-let notEnoughFlag = false; // not enough 15
-let notTodayFlag = false; // not today
-
-
-class algoliaInit extends Subscription {
+class LagouTask extends Subscription {
   // 通过 schedule 属性来设置定时任务的执行间隔等配置
   static get schedule() {
     return {
       immediate: false,
-      cron: '0 0 */8 * * *',
       type: 'worker', // 指定所有的 worker 都需要执行
+      disable: true,
     };
   }
-  /**
-   * get yesterday data
-   */
+
+  // subscribe 是真正定时任务执行时被运行的函数
   async subscribe() {
-    this.remote(currentPage);
+    currentPage = 1;
+    addCount = 0;
+    getCount = 0;
+    this.remote();
   }
-  /**
-   * get Page
-   */
   async remote() {
+    const { ctx } = this;
     try {
-      if (this.ctx.app.lagouCache.executedFlag === false) {
-        console.log('stopFlag, stop');
+      // 最后一页
+      if (ctx.app.lagouCache.executedFlag === false) {
+        console.log('stopFlag');
         return;
       }
-      if (notEnoughFlag) {
-        this.stopTask();
-        console.log('notEnoughFlag, stop');
-        return;
-      }
-      if (notTodayFlag) {
-        this.stopTask();
-        console.log('notTodayFlag, stop');
-        return;
-      }
-      const { ctx } = this;
       const res = await ctx.service.lagou.remoteList(currentPage, '成都', 'web前端');
       if (res.list.length) {
         await this.findAndUpadte(res.list);
-        if (res.list.length !== 15) {
-          console.log('not enough 15!!!!!');
-          notEnoughFlag = true;
-        }
+      } else if (res.list.length === 0 && res.msg.success) {
+        console.log(`last page,no more data,this time got ${getCount} added ${addCount}！`);
+        // 此处可以开始读取没有详情的jobDetail数据
+        ctx.service.lagou.stop();
+      } else {
+        console.log(res.msg);
+        ctx.service.lagou.stop();
       }
-      await this.sleep(120000, 'remote');
-      currentPage += 1;
-      this.remote();
     } catch (err) {
-      this.stopTask();
       console.log(err);
-      // await this.sleep(600000);
+      ctx.service.lagou.stop();
     }
-  }
-  stopTask() {
-    this.ctx.app.lagouCache.executedFlag = false;
   }
   /**
    * @param {array} arr - list
    */
   async findAndUpadte(arr) {
     const { ctx } = this;
-    const client = await ctx.service.mongodb.client();
-    for (let i = 0, len = arr.length; i < len; i++) {
-      if (moment(arr[i].createTime).date() !== moment().date()) {
-        notTodayFlag = true;
+    try {
+      const client = await ctx.service.mongodb.client();
+      const totalCount = arr.length;
+      let updatedCount = 0;
+      for (let i = 0; i < totalCount; i++) {
+        getCount++;
+        const el = arr[i];
+        // 列表里面的 encryptId 是 jobId
+        const salary_min = el.salary.match(/\d+/g) ? el.salary.match(/\d+/g)[0] : null;
+        const salary_max = el.salary.match(/\d+/g) ? el.salary.match(/\d+/g)[1] : null;
+        const jobStatus = 1; // lagou 列表里面没有状态，所以都为 1 无详情状态
+        const findRes = await client.collection('jobs').findOneAndUpdate({ jobId: el.id }, {
+          $set: {
+            jobId: el.id,
+            remoteStatus: 'ONLINE',
+            jobName: el.name,
+            cityName: el.city,
+            jobExperience: el.workYear,
+            degreeName: el.education,
+            salary_min,
+            salary_max,
+            salaryDesc: el.salary,
+            companyShortName: el.companyShortName,
+            companyLogo: el.companyLogo,
+            jobFrom: 'lagou',
+          },
+          $currentDate: { update_time: true },
+          $setOnInsert: {
+            create_time: new Date(),
+            jobStatus,
+          },
+        }, {
+          upsert: true,
+          returnOriginal: false,
+        });
+        if (findRes.lastErrorObject.updatedExisting) {
+          updatedCount++;
+        }
       }
-      arr[i].update_time = new Date();
-      const insertRes = await client.collection('jobs').findOneAndUpdate({ positionId: arr[i].positionId }, {
-        $set: arr[i],
-      }, {
-        upsert: true,
-        returnOriginal: false,
-      });
-      if (insertRes.lastErrorObject.updatedExisting) updatedExistingNum += 1;
-      if (insertRes.ok) console.log(`page:${currentPage}/${totalPage},alreadyNum:${updatedExistingNum}: ${arr[i].companyFullName} | ${arr[i].positionName}`);
+      console.log(`Updated Remote List: ${totalCount} | updated Data: ${updatedCount} | time: ${new Date()}`);
+      await ctx.service.lagou.sleep(1000, 'Get Remote List wait');
+      addCount = addCount + totalCount - updatedCount;
+      currentPage += 1;
+      this.remote();
+      this.taskInsert(new Date(), totalCount, arr[0].city, keyword, updatedCount);
+    } catch (err) {
+      console.log(err);
+      ctx.service.lagou.stop();
     }
   }
-  sleep(time = 60000, info = '') {
-    console.log(info + 'wait' + time);
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve();
-      }, time);
+  /**
+   * @param {DateTime} create_time - 创建时间
+   * @param {int} totalCount - 本页总数
+   * @param {string} city - 城市
+   * @param {string} keyword - 关键字
+   * @param {string} updatedCount - 本次更新总数
+   */
+  async taskInsert(create_time, totalCount, city, keyword, updatedCount) {
+    const client = await this.ctx.service.mongodb.client();
+    await client.collection('logs').insertOne({
+      type: 'lagou',
+      create_time,
+      totalCount,
+      city,
+      keyword,
+      updatedCount,
     });
   }
 }
 
-module.exports = algoliaInit;
+module.exports = LagouTask;
