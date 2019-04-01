@@ -66,7 +66,7 @@ new Vue({
               case 'lagou':
                 return h('a', {
                   attrs: {
-                    href: record.url,
+                    href: `https://www.lagou.com/jobs/${record.jobId}.html`,
                     target: '_blank'
                   }
                 }, 'L')

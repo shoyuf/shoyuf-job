@@ -3,10 +3,15 @@ NProgress.start();
 let homeMarker, circleEdit, jobClusterer;
 const colorList = ['lightsalmon', 'salmon', 'darksalmon', 'lightcoral', 'indianred', 'crimson', 'firebrick', 'red', 'darkred', 'coral', 'tomato', 'orangered', 'gold', 'orange', 'darkorange', 'lightyellow', 'lemonchiffon', 'moccasin', 'peachpuff', 'palegoldenrod', 'khaki', 'darkkhaki', 'limegreen', 'lime', 'forestgreen', 'green', 'darkgreen', 'greenyellow', 'yellowgreen', 'springgreen', 'mediumspringgreen', 'lightgreen', 'palegreen', 'darkseagreen', 'mediumseagreen', 'seagreen', 'olive', 'darkolivegreen', 'olivedrab	', 'aqua', 'mediumaquamarine', 'paleturquoise', 'turquoise', 'lightseagreen', 'cadetblue', 'darkcyan', 'teal', 'powderblue', 'lightskyblue', 'deepskyblue', 'lightsteelblue', 'dodgerblue', 'cornflowerblue', 'steelblue', 'royalblue', 'mediumblue', 'darkblue', 'midnightblue', 'mediumslateblue', 'darkslateblue', 'lavender', 'thistle', 'plum', 'orchid', 'magenta', 'mediumorchid', 'mediumpurple', 'blueviolet', 'darkviolet', 'darkorchid', 'darkmagenta', 'indigo', 'pink', 'hotpink', 'deeppink', 'palevioletred', 'mediumvioletred', 'gainsboro', 'silver', 'gray', 'dimgray', 'lightslategray', 'slategray', 'darkslategray', 'black', 'navajowhite', 'tan', 'rosybrown', 'sandybrown', 'goldenrod', 'peru', 'chocolate', 'saddlebrown', 'sienna', 'brown', 'maroon'];
 let aMap = new AMap.Map('container', {
+  showIndoorMap: false,
   mapStyle: 'amap://styles/c4df92f5249831f6e56519481f366553',
   center: [104.0655899048, 30.6565202250],
   zoom: 12,
 });
+aMap.addControl(new AMap.ToolBar({
+  position: 'LB',
+  liteStyle: true
+}));
 aMap.on("complete", function () {
   NProgress.done();
 });
@@ -112,10 +117,11 @@ const app = new Vue({
         this.favoriteList.push(currentJob.jobId);
         this.markersNum--;
       }
-      currentJob.marker.setContent(`<div class="map-icon ${currentJob.jobFrom} ${this.jobDetail.favorited ? 'favorited' : ''}" title="${currentJob.companyShortName}"></div>`);
+      currentJob.marker.setContent(`<div class="map-icon ${currentJob.jobFrom} ${this.jobDetail.favorited ? 'favorited' : ''}" data-name="${currentJob.companyShortName}"></div>`);
     },
-    emptyBlockedList() {
+    async emptyBlockedList() {
       this.blockedList = [];
+      await this.getList()
       this.filter()
     },
     // 筛选查询
@@ -149,11 +155,23 @@ const app = new Vue({
     async getList() {
       const res = await axios.get('/resources');
       this.jobList = res.data.list;
+      // cache list, speed up indexOf!
+      const cache_favoriteList = JSON.parse(JSON.stringify(this.favoriteList));
+      const cache_blockedList = JSON.parse(JSON.stringify(this.blockedList));
       this.jobList.forEach((e, index) => {
         const lng = parseFloat(e.longitude, 10) || 0;
         const lat = parseFloat(e.latitude, 10) || 0;
-        const favorited = this.favoriteList.includes(e.jobId) ? 'favorited' : '';
-        const blocked = this.blockedList.includes(e.jobId) ? 'blocked' : '';
+        let favorited, blocked;
+        const fIndex = cache_favoriteList.indexOf(e.jobId)
+        if (fIndex !== -1) {
+          favorited = true
+          cache_favoriteList.splice(fIndex, 1)
+        }
+        const bIndex = cache_blockedList.indexOf(e.jobId)
+        if (bIndex !== -1) {
+          blocked = true
+          cache_blockedList.splice(bIndex, 1)
+        }
         const marker = new AMap.Marker({
           map: aMap,
           visible: false,
@@ -161,9 +179,9 @@ const app = new Vue({
           animation: 'AMAP_ANIMATION_DROP',
           title: e.companyShortName,
           position: [lng, lat], // 位置
-          content: `<div class="map-icon ${e.jobFrom} ${favorited}"></div>`,
+          content: `<div class="map-icon ${e.jobFrom} ${favorited ? 'favorited' : ''}" data-name="${e.companyShortName}"></div>`,
         });
-        Object.assign(e, { marker, favorited: !!favorited, blocked: !!blocked, index })
+        Object.assign(e, { marker, favorited: favorited, blocked: blocked, index })
         AMap.event.addListener(marker, 'click', async () => {
           NProgress.start();
           const resItem = await axios.get('/resources/' + e._id);

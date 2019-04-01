@@ -1,5 +1,3 @@
-
-
 'use strict';
 const Subscription = require('egg').Subscription;
 let countNum,

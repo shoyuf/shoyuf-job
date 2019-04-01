@@ -6,20 +6,26 @@ class HomeService extends Service {
   async list(currentPage = 1, querys) {
     const { ctx } = this;
     const { projectionAll } = querys;
-    const pageSize = 999;
+    const pageSize = 2000;
     const client = await ctx.service.mongodb.client();
     const skip = currentPage === 1 ? 0 : pageSize * (currentPage - 1);
     // const filter = status === 1 ? { status: 1 } : {};
     const filter = { jobStatus: 2 };
     const res = await client.collection('jobs').find(filter, {
-      projection: projectionAll ? { } : {
-        salary_max: 1,
-        jobExperience: 1,
-        longitude: 1,
-        latitude: 1,
-        jobId: 1,
-        companyShortName: 1,
-        jobFrom: 1,
+      projection: projectionAll ? {
+        zhipin_cache_lid: false,
+        companyId: false,
+        expectId: false,
+        hrId: false,
+        companyApprove: false,
+      } : {
+        salary_max: true,
+        jobExperience: true,
+        longitude: true,
+        latitude: true,
+        jobId: true,
+        companyShortName: true,
+        jobFrom: true,
       },
       limit: pageSize, skip,
       sort: {

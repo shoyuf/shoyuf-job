@@ -12,7 +12,7 @@ class ZhipinController extends Controller {
       ctx.redirect('/monitor');
       await this.app.runSchedule('zhipin.js');
     } else {
-      ctx.status = 400;
+      ctx.status = 403;
       ctx.body = testRes || 'please input session';
     }
   }
@@ -25,7 +25,7 @@ class ZhipinController extends Controller {
       ctx.redirect('/monitor');
       await this.app.runSchedule('zhipin-items.js');
     } else {
-      ctx.status = 400;
+      ctx.status = 403;
       ctx.body = testRes || 'please input session';
     }
   }
@@ -38,7 +38,7 @@ class ZhipinController extends Controller {
       ctx.redirect('/monitor');
       await this.app.runSchedule('zhipin-update-items.js');
     } else {
-      ctx.status = 400;
+      ctx.status = 403;
       ctx.body = testRes || 'please input session';
     }
   }

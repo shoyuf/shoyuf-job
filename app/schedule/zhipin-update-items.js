@@ -90,26 +90,12 @@ class ZhipinItemsTask extends Subscription {
       if (findOneRes) {
         const remoteDetailRes = await ctx.service.zhipin.remoteDetail(findOneRes.jobId, findOneRes.zhipin_cache_lid);
         if (remoteDetailRes.item) {
-          const { bossBaseInfoVO, jobBaseInfoVO, brandComInfoVO } = remoteDetailRes.item;
+          const { jobBaseInfoVO, brandComInfoVO } = remoteDetailRes.item;
           const jobStatus = jobBaseInfoVO.jobValidStatus === 1 ? 2 : jobBaseInfoVO.jobValidStatus === 2 ? 4 : `0_${jobBaseInfoVO.jobValidStatus}`;
           await client.collection('jobs').updateOne({ jobId: findOneRes.jobId }, {
             $set: {
               remoteStatus: jobBaseInfoVO.jobValidStatus, // list aboved
-              teamDesc: bossBaseInfoVO.teamDesc,
-              comLabelList: bossBaseInfoVO.teamLureList,
-              hrId: bossBaseInfoVO.encryptBossId,
               expectId: jobBaseInfoVO.expectId,
-              districtName: jobBaseInfoVO.areaDistrict,
-              jobDesc: jobBaseInfoVO.jobDesc,
-              requiredSkills: jobBaseInfoVO.requiredSkills,
-              address: jobBaseInfoVO.address,
-              longitude: jobBaseInfoVO.longitude,
-              latitude: jobBaseInfoVO.latitude,
-              comIndustryName: brandComInfoVO.industryName,
-              comStageName: brandComInfoVO.stageName,
-              companySize: brandComInfoVO.scaleName,
-              companyFullName: brandComInfoVO.comName,
-              companyId: brandComInfoVO.encryptBrandId,
               jobStatus,
             },
             $currentDate: { update_time: true },

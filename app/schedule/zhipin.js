@@ -1,9 +1,8 @@
-
-
 'use strict';
 const Subscription = require('egg').Subscription;
 let currentPage,
-  addCount;
+  addCount,
+  getCount;
 const keyword = 'web前端';
 /**
  * @var jobStatus
@@ -28,6 +27,7 @@ class ZhipinTask extends Subscription {
   async subscribe() {
     currentPage = 1;
     addCount = 0;
+    getCount = 0;
     this.remote();
   }
   async remote() {
@@ -42,7 +42,7 @@ class ZhipinTask extends Subscription {
       if (res.list.length) {
         await this.findAndUpadte(res.list);
       } else if (res.list.length === 0 && res.msg.rescode === 1) {
-        console.log(`last page,no more data,this time added ${addCount}！`);
+        console.log(`last page,no more data,this time got ${getCount} added ${addCount}！`);
         // 此处可以开始读取没有详情的jobDetail数据
         ctx.service.zhipin.stop();
       } else {
@@ -65,6 +65,7 @@ class ZhipinTask extends Subscription {
       const cityName = arr[0].cityName || null;
       let updatedCount = 0;
       for (let i = 0; i < totalCount; i++) {
+        getCount++;
         const el = arr[i];
         // 列表里面的 encryptId 是 jobId
         const salary_min = el.jobSalary.match(/\d+/g) ? el.jobSalary.match(/\d+/g)[0] : null;
