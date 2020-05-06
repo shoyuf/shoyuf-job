@@ -81,16 +81,19 @@ class Zhipin extends Service {
   async remoteDetail(encryptId, lid) {
     const { ctx } = this;
     try {
-      if (ctx.app.zhipinCache.executedFlag === false) {
+      const stopFlag = await ctx.service.lowdb.get("zhipin.stopFlag");
+      if (stopFlag) {
         console.log("stopFlag, stop");
         return;
       }
+      const { mpt, wt } = await ctx.service.lowdb.get("zhipin.query");
       const res = await ctx.curl(
-        `https://wxapp.zhipin.com/bzminiapp/geek/job/detail.json?accountId=1006&jobId=${encryptId}&lid=${lid}&source=&scene=1001`,
+        `${HOST_PREFIX}//wapi/zpgeek/miniapp/job/detail.json?jobId=${encryptId}&lid=${lid}&source=&scene=&appId=${APPID}`,
         {
           dataType: "json",
           headers: {
-            session: ctx.app.zhipinCache.session,
+            mpt,
+            wt,
           },
         }
       );
