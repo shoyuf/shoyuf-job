@@ -1,8 +1,5 @@
-'use strict';
-const Subscription = require('egg').Subscription;
-let countNum,
-  timeoutCount,
-  thisCount;
+const Subscription = require("egg").Subscription;
+let countNum, timeoutCount, thisCount;
 /**
  * @var jobStatus
  * 0:被手动删除
@@ -17,7 +14,7 @@ class ZhipinItemsTask extends Subscription {
   static get schedule() {
     return {
       immediate: false,
-      type: 'worker', // 指定所有的 worker 都需要执行
+      type: "worker", // 指定所有的 worker 都需要执行
       disable: true,
     };
   }
@@ -32,14 +29,14 @@ class ZhipinItemsTask extends Subscription {
     const { ctx } = this;
     try {
       const client = await ctx.service.mongodb.client();
-      thisCount = await client.collection('jobs').countDocuments({
-        jobFrom: 'zhipin',
+      thisCount = await client.collection("jobs").countDocuments({
+        jobFrom: "zhipin",
         jobStatus: 1,
       });
       if (thisCount) {
         this.findAndUpdateDetail();
       } else {
-        console.log('no more no-detail item!!! stop');
+        console.log("no more no-detail item!!! stop");
         ctx.service.zhipin.stop();
       }
     } catch (err) {
@@ -51,56 +48,77 @@ class ZhipinItemsTask extends Subscription {
     const { ctx } = this;
     try {
       if (ctx.app.zhipinCache.executedFlag === false) {
-        console.log('stopFlag');
+        console.log("stopFlag");
         return;
       }
       const client = await ctx.service.mongodb.client();
       // find a no-detail item
-      const findOneRes = await client.collection('jobs').findOne({
-        jobFrom: 'zhipin',
+      const findOneRes = await client.collection("jobs").findOne({
+        jobFrom: "zhipin",
         jobStatus: 1,
       });
       if (findOneRes) {
-        const remoteDetailRes = await ctx.service.zhipin.remoteDetail(findOneRes.jobId, findOneRes.zhipin_cache_lid);
+        const remoteDetailRes = await ctx.service.zhipin.remoteDetail(
+          findOneRes.jobId,
+          findOneRes.zhipin_cache_lid
+        );
         if (remoteDetailRes.item) {
-          const { bossBaseInfoVO, jobBaseInfoVO, brandComInfoVO } = remoteDetailRes.item;
-          const jobStatus = jobBaseInfoVO.jobValidStatus === 1 ? 2 : jobBaseInfoVO.jobValidStatus === 2 ? 4 : `0_${jobBaseInfoVO.jobValidStatus}`;
-          await client.collection('jobs').updateOne({ jobId: findOneRes.jobId }, {
-            $set: {
-              remoteStatus: jobBaseInfoVO.jobValidStatus, // list aboved
-              teamDesc: bossBaseInfoVO.teamDesc,
-              comLabelList: bossBaseInfoVO.teamLureList,
-              hrId: bossBaseInfoVO.encryptBossId,
-              expectId: jobBaseInfoVO.expectId,
-              districtName: jobBaseInfoVO.areaDistrict,
-              jobDesc: jobBaseInfoVO.jobDesc,
-              requiredSkills: jobBaseInfoVO.requiredSkills,
-              address: jobBaseInfoVO.address,
-              longitude: jobBaseInfoVO.longitude,
-              latitude: jobBaseInfoVO.latitude,
-              comIndustryName: brandComInfoVO.industryName,
-              comStageName: brandComInfoVO.stageName,
-              companySize: brandComInfoVO.scaleName,
-              companyFullName: brandComInfoVO.comName,
-              companyId: brandComInfoVO.encryptBrandId,
-              jobStatus,
+          const {
+            bossBaseInfoVO,
+            jobBaseInfoVO,
+            brandComInfoVO,
+          } = remoteDetailRes.item;
+          const jobStatus =
+            jobBaseInfoVO.jobValidStatus === 1
+              ? 2
+              : jobBaseInfoVO.jobValidStatus === 2
+              ? 4
+              : `0_${jobBaseInfoVO.jobValidStatus}`;
+          await client.collection("jobs").updateOne(
+            { jobId: findOneRes.jobId },
+            {
+              $set: {
+                remoteStatus: jobBaseInfoVO.jobValidStatus, // list aboved
+                teamDesc: bossBaseInfoVO.teamDesc,
+                comLabelList: bossBaseInfoVO.teamLureList,
+                hrId: bossBaseInfoVO.encryptBossId,
+                expectId: jobBaseInfoVO.expectId,
+                districtName: jobBaseInfoVO.areaDistrict,
+                jobDesc: jobBaseInfoVO.jobDesc,
+                requiredSkills: jobBaseInfoVO.requiredSkills,
+                address: jobBaseInfoVO.address,
+                longitude: jobBaseInfoVO.longitude,
+                latitude: jobBaseInfoVO.latitude,
+                comIndustryName: brandComInfoVO.industryName,
+                comStageName: brandComInfoVO.stageName,
+                companySize: brandComInfoVO.scaleName,
+                companyFullName: brandComInfoVO.comName,
+                companyId: brandComInfoVO.encryptBrandId,
+                jobStatus,
+              },
+              $currentDate: { update_time: true },
             },
-            $currentDate: { update_time: true },
-          }, {
-            upsert: false,
-          });
+            {
+              upsert: false,
+            }
+          );
           countNum++;
           timeoutCount = 0;
-          console.log(`[${countNum}/${thisCount}]Updated Remote Detail: ${brandComInfoVO.comName} | ${jobBaseInfoVO.positionName} - ${findOneRes.jobId}`);
-          await ctx.service.zhipin.sleep(5000, 'Get Remote Item wait');
+          console.log(
+            `[${countNum}/${thisCount}]Updated Remote Detail: ${brandComInfoVO.comName} | ${jobBaseInfoVO.positionName} - ${findOneRes.jobId}`
+          );
+          await ctx.service.zhipin.sleep(5000, "Get Remote Item wait");
           this.findAndUpdateDetail();
         } else if (remoteDetailRes.msg.rescode === 3001) {
           console.log(remoteDetailRes.msg);
           timeoutCount = 0;
-          await client.collection('jobs').updateOne({ jobId: findOneRes.jobId }, {
-            $set: { jobStatus: 3 },
-          });
-          await ctx.service.zhipin.sleep(4000, 'Get Remote Item wait');
+          await client.collection("jobs").updateOne(
+            { jobId: findOneRes.jobId },
+            {
+              $set: { jobStatus: 3 },
+            }
+          );
+          await ctx.service.zhipin.sleep(4000, "Get Remote Item wait");
           this.findAndUpdateDetail();
         } else if (timeoutCount < 2) {
           timeoutCount++;
@@ -108,17 +126,15 @@ class ZhipinItemsTask extends Subscription {
         } else {
           console.log(remoteDetailRes.msg);
           ctx.service.zhipin.stop();
-
         }
       } else {
-        console.log('no more no-detail item!!! stop');
+        console.log("no more no-detail item!!! stop");
         ctx.service.zhipin.stop();
       }
     } catch (err) {
       console.log(err);
       ctx.service.zhipin.stop();
     }
-
   }
 }
 

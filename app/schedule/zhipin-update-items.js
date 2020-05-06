@@ -1,5 +1,4 @@
-'use strict';
-const Subscription = require('egg').Subscription;
+const Subscription = require("egg").Subscription;
 let countNum, // 已更新总数
   timeoutCount, // 超时次数
   thisCount, // 本次更新总数
@@ -24,7 +23,7 @@ class ZhipinItemsTask extends Subscription {
   static get schedule() {
     return {
       immediate: false,
-      type: 'worker', // 指定所有的 worker 都需要执行
+      type: "worker", // 指定所有的 worker 都需要执行
       disable: true,
     };
   }
@@ -39,18 +38,21 @@ class ZhipinItemsTask extends Subscription {
     const { ctx } = this;
     const client = await ctx.service.mongodb.client();
     try {
-      const recentDay = await client.collection('jobs').findOne({
-        jobFrom: 'zhipin',
-        jobStatus: 2, // 有详情
-      }, {
-        sort: {
-          update_time: -1,
+      const recentDay = await client.collection("jobs").findOne(
+        {
+          jobFrom: "zhipin",
+          jobStatus: 2, // 有详情
         },
-      });
+        {
+          sort: {
+            update_time: -1,
+          },
+        }
+      );
       const _o = new Date(recentDay.update_time);
       const d = new Date(_o.getFullYear(), _o.getMonth(), _o.getDate());
-      thisCount = await client.collection('jobs').countDocuments({
-        jobFrom: 'zhipin',
+      thisCount = await client.collection("jobs").countDocuments({
+        jobFrom: "zhipin",
         jobStatus: 2, // 有详情
         remoteStatus: 1, // 远程状态正常
         update_time: { $lt: d },
@@ -59,7 +61,7 @@ class ZhipinItemsTask extends Subscription {
         console.log(`this update count is ${thisCount} // ${d}`);
         this.findAndUpdateDetail(d);
       } else {
-        console.log('no one item!');
+        console.log("no one item!");
         ctx.service.zhipin.stop();
       }
     } catch (err) {
@@ -71,50 +73,71 @@ class ZhipinItemsTask extends Subscription {
     const { ctx } = this;
     try {
       if (ctx.app.zhipinCache.executedFlag === false) {
-        console.log('stopFlag');
+        console.log("stopFlag");
         return;
       }
       const client = await ctx.service.mongodb.client();
       // find a lateset item 上一次更新列表中在列表里面的
 
-      const findOneRes = await client.collection('jobs').findOne({
-        jobFrom: 'zhipin',
-        jobStatus: 2, // 有详情
-        remoteStatus: 1, // 远程状态正常
-        update_time: { $lt: new Date(recentDay) },
-      }, {
-        sort: {
-          update_time: 1,
+      const findOneRes = await client.collection("jobs").findOne(
+        {
+          jobFrom: "zhipin",
+          jobStatus: 2, // 有详情
+          remoteStatus: 1, // 远程状态正常
+          update_time: { $lt: new Date(recentDay) },
         },
-      });
+        {
+          sort: {
+            update_time: 1,
+          },
+        }
+      );
       if (findOneRes) {
-        const remoteDetailRes = await ctx.service.zhipin.remoteDetail(findOneRes.jobId, findOneRes.zhipin_cache_lid);
+        const remoteDetailRes = await ctx.service.zhipin.remoteDetail(
+          findOneRes.jobId,
+          findOneRes.zhipin_cache_lid
+        );
         if (remoteDetailRes.item) {
           const { jobBaseInfoVO, brandComInfoVO } = remoteDetailRes.item;
-          const jobStatus = jobBaseInfoVO.jobValidStatus === 1 ? 2 : jobBaseInfoVO.jobValidStatus === 2 ? 4 : `0_${jobBaseInfoVO.jobValidStatus}`;
-          await client.collection('jobs').updateOne({ jobId: findOneRes.jobId }, {
-            $set: {
-              remoteStatus: jobBaseInfoVO.jobValidStatus, // list aboved
-              expectId: jobBaseInfoVO.expectId,
-              jobStatus,
+          const jobStatus =
+            jobBaseInfoVO.jobValidStatus === 1
+              ? 2
+              : jobBaseInfoVO.jobValidStatus === 2
+              ? 4
+              : `0_${jobBaseInfoVO.jobValidStatus}`;
+          await client.collection("jobs").updateOne(
+            { jobId: findOneRes.jobId },
+            {
+              $set: {
+                remoteStatus: jobBaseInfoVO.jobValidStatus, // list aboved
+                expectId: jobBaseInfoVO.expectId,
+                jobStatus,
+              },
+              $currentDate: { update_time: true },
             },
-            $currentDate: { update_time: true },
-          }, {
-            upsert: false,
-          });
-          if (jobBaseInfoVO.jobValidStatus !== findOneRes.remoteStatus) changeCount++;
+            {
+              upsert: false,
+            }
+          );
+          if (jobBaseInfoVO.jobValidStatus !== findOneRes.remoteStatus)
+            changeCount++;
           countNum++;
           timeoutCount = 0;
-          console.log(`[${countNum}/${thisCount} | ${changeCount} 😷 ]updated Older Detail: ${brandComInfoVO.comName} | ${findOneRes.jobId} | ${findOneRes.remoteStatus} -> ${jobBaseInfoVO.jobValidStatus}`);
-          await ctx.service.zhipin.sleep(5000, 'Get Older Item Wait');
+          console.log(
+            `[${countNum}/${thisCount} | ${changeCount} 😷 ]updated Older Detail: ${brandComInfoVO.comName} | ${findOneRes.jobId} | ${findOneRes.remoteStatus} -> ${jobBaseInfoVO.jobValidStatus}`
+          );
+          await ctx.service.zhipin.sleep(5000, "Get Older Item Wait");
           this.findAndUpdateDetail(recentDay);
         } else if (remoteDetailRes.msg.rescode === 3001) {
           console.log(remoteDetailRes.msg);
           timeoutCount = 0;
-          await client.collection('jobs').updateOne({ jobId: findOneRes.jobId }, {
-            $set: { jobStatus: 3 },
-          });
-          await ctx.service.zhipin.sleep(4000, 'Get Older Item Wait');
+          await client.collection("jobs").updateOne(
+            { jobId: findOneRes.jobId },
+            {
+              $set: { jobStatus: 3 },
+            }
+          );
+          await ctx.service.zhipin.sleep(4000, "Get Older Item Wait");
           this.findAndUpdateDetail(recentDay);
         } else if (timeoutCount < 2) {
           timeoutCount++;
@@ -124,14 +147,13 @@ class ZhipinItemsTask extends Subscription {
           ctx.service.zhipin.stop();
         }
       } else {
-        console.log('no more older item!!! stop');
+        console.log("no more older item!!! stop");
         ctx.service.zhipin.stop();
       }
     } catch (err) {
       console.log(err);
       ctx.service.zhipin.stop();
     }
-
   }
 }
 

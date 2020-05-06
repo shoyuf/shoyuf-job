@@ -1,6 +1,4 @@
-'use strict';
-
-const Controller = require('egg').Controller;
+const Controller = require("egg").Controller;
 
 class HomeController extends Controller {
   async list(ctx) {
@@ -8,21 +6,25 @@ class HomeController extends Controller {
     ctx.body = { list: res, pageInfo: res.pageInfo, filters: res.filters };
   }
   async item(ctx) {
-    const positionId = isNaN(Number(ctx.params.positionId, 10)) ? ctx.params.positionId : Number(ctx.params.positionId, 10);
+    const positionId = isNaN(Number(ctx.params.positionId, 10))
+      ? ctx.params.positionId
+      : Number(ctx.params.positionId, 10);
     if (positionId) {
       const item = await ctx.service.home.item(positionId);
       ctx.body = item;
     } else {
-      ctx.body = 'error params';
+      ctx.body = "error params";
     }
   }
   async map(ctx) {
-    await ctx.render('map.tpl');
+    await ctx.render("map.tpl");
   }
   async monitor(ctx) {
-    await ctx.render('monitor.tpl', {
-      zhipinStatus: ctx.app.zhipinCache.executedFlag,
-      lagouStatus: ctx.app.lagouCache.executedFlag,
+    const zhipin = await ctx.service.lowdb.get("zhipin");
+    // const lagouCache = await service.jserver.find("lagou");
+    await ctx.render("monitor.tpl", {
+      zhipin,
+      // lagouStatus: lagouCache.executedFlag,
     });
   }
 }

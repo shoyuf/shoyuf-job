@@ -1,15 +1,13 @@
-'use strict';
+const secretConfig = require("./secret_config.js");
 
-const secretConfig = require('./secret_config.js');
-
-module.exports = appInfo => {
+module.exports = (appInfo) => {
   return {
     // use for cookie sign key, should change to your own and keep security
     keys: appInfo.name + secretConfig.cookieKeyStr,
     view: {
-      defaultViewEngine: 'nunjucks',
+      defaultViewEngine: "nunjucks",
       mapping: {
-        '.tpl': 'nunjucks',
+        ".tpl": "nunjucks",
       },
     },
     // add your config here

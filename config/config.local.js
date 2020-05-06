@@ -1,5 +1,8 @@
-'use strict';
-
 module.exports = {
-  middleware: [ 'logger' ],
+  middleware: ["logger"],
+  security: {
+    csrf: {
+      enable: false,
+    },
+  },
 };

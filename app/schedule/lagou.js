@@ -1,9 +1,6 @@
-'use strict';
-const Subscription = require('egg').Subscription;
-let currentPage,
-  addCount,
-  getCount;
-const keyword = 'web前端';
+const Subscription = require("egg").Subscription;
+let currentPage, addCount, getCount;
+const keyword = "web前端";
 /**
  * @var jobStatus
  * 0:被手动删除
@@ -18,7 +15,7 @@ class LagouTask extends Subscription {
   static get schedule() {
     return {
       immediate: false,
-      type: 'worker', // 指定所有的 worker 都需要执行
+      type: "worker", // 指定所有的 worker 都需要执行
       disable: true,
     };
   }
@@ -35,14 +32,20 @@ class LagouTask extends Subscription {
     try {
       // 最后一页
       if (ctx.app.lagouCache.executedFlag === false) {
-        console.log('stopFlag');
+        console.log("stopFlag");
         return;
       }
-      const res = await ctx.service.lagou.remoteList(currentPage, '成都', 'web前端');
+      const res = await ctx.service.lagou.remoteList(
+        currentPage,
+        "成都",
+        "web前端"
+      );
       if (res.list.length) {
         await this.findAndUpadte(res.list);
       } else if (res.list.length === 0 && res.msg.success) {
-        console.log(`last page,no more data,this time got ${getCount} added ${addCount}！`);
+        console.log(
+          `last page,no more data,this time got ${getCount} added ${addCount}！`
+        );
         // 此处可以开始读取没有详情的jobDetail数据
         ctx.service.lagou.stop();
       } else {
@@ -67,43 +70,59 @@ class LagouTask extends Subscription {
         getCount++;
         const el = arr[i];
         // 列表里面的 encryptId 是 jobId
-        const salary_min = el.salary.match(/\d+/g) ? el.salary.match(/\d+/g)[0] : null;
-        const salary_max = el.salary.match(/\d+/g) ? el.salary.match(/\d+/g)[1] : null;
+        const salary_min = el.salary.match(/\d+/g)
+          ? el.salary.match(/\d+/g)[0]
+          : null;
+        const salary_max = el.salary.match(/\d+/g)
+          ? el.salary.match(/\d+/g)[1]
+          : null;
         const jobStatus = 1; // lagou 列表里面没有状态，所以都为 1 无详情状态
-        const findRes = await client.collection('jobs').findOneAndUpdate({ jobId: el.id }, {
-          $set: {
-            jobId: el.id,
-            remoteStatus: 'ONLINE',
-            jobName: el.name,
-            cityName: el.city,
-            jobExperience: el.workYear,
-            degreeName: el.education,
-            salary_min,
-            salary_max,
-            salaryDesc: el.salary,
-            companyShortName: el.companyShortName,
-            companyLogo: el.companyLogo,
-            jobFrom: 'lagou',
+        const findRes = await client.collection("jobs").findOneAndUpdate(
+          { jobId: el.id },
+          {
+            $set: {
+              jobId: el.id,
+              remoteStatus: "ONLINE",
+              jobName: el.name,
+              cityName: el.city,
+              jobExperience: el.workYear,
+              degreeName: el.education,
+              salary_min,
+              salary_max,
+              salaryDesc: el.salary,
+              companyShortName: el.companyShortName,
+              companyLogo: el.companyLogo,
+              jobFrom: "lagou",
+            },
+            $currentDate: { update_time: true },
+            $setOnInsert: {
+              create_time: new Date(),
+              jobStatus,
+            },
           },
-          $currentDate: { update_time: true },
-          $setOnInsert: {
-            create_time: new Date(),
-            jobStatus,
-          },
-        }, {
-          upsert: true,
-          returnOriginal: false,
-        });
+          {
+            upsert: true,
+            returnOriginal: false,
+          }
+        );
         if (findRes.lastErrorObject.updatedExisting) {
           updatedCount++;
         }
       }
-      console.log(`Updated Remote List: ${totalCount} | updated Data: ${updatedCount} | time: ${new Date()}`);
-      await ctx.service.lagou.sleep(1000, 'Get Remote List wait');
+      console.log(
+        `Updated Remote List: ${totalCount} | updated Data: ${updatedCount} | time: ${new Date()}`
+      );
+      await ctx.service.lagou.sleep(1000, "Get Remote List wait");
       addCount = addCount + totalCount - updatedCount;
       currentPage += 1;
       this.remote();
-      this.taskInsert(new Date(), totalCount, arr[0].city, keyword, updatedCount);
+      this.taskInsert(
+        new Date(),
+        totalCount,
+        arr[0].city,
+        keyword,
+        updatedCount
+      );
     } catch (err) {
       console.log(err);
       ctx.service.lagou.stop();
@@ -118,8 +137,8 @@ class LagouTask extends Subscription {
    */
   async taskInsert(create_time, totalCount, city, keyword, updatedCount) {
     const client = await this.ctx.service.mongodb.client();
-    await client.collection('logs').insertOne({
-      type: 'lagou',
+    await client.collection("logs").insertOne({
+      type: "lagou",
       create_time,
       totalCount,
       city,

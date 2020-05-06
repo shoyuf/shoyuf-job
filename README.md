@@ -1,13 +1,14 @@
 ## SHOYUF-JOB
+
 ![platform](https://img.shields.io/badge/platform-Web-blue.svg)
 
 一个基于 Egg (Koa2) 开发的职位爬虫
 
 ### 平台支持
 
-| 拉勾Lagou | Boss直聘 |
-| - | - |
-| ✔ | ✔ |
+| 拉勾 Lagou | Boss 直聘 |
+| ---------- | --------- |
+| ✔          | ✔         |
 
 ### 功能完整程度
 
@@ -46,40 +47,41 @@
 - 如何使用爬虫程序
 
   1. 启动应用
-  2. 抓取 Boss 直聘微信小程序任意接口Session（ Boss 直聘需要 Session ）
+  2. 抓取 Boss 直聘微信小程序任意接口 Session（ Boss 直聘需要 Session ）
   3. 进入 `/monitor` 输入 Session 点击开始
 
   原因：Boss 直聘官网仅有十页且反爬程序稍微复杂需要用到代理池，故先采用小程序接口优化体验
 
 - 如何查找其他职位和其他城市信息
 
-  *在 `app/schedule/lagou.js` 中修改相关字段，如 `成都` 或 `web前端`*
+  _在 `app/schedule/lagou.js` 中修改相关字段，如 `成都` 或 `web前端`_
 
 - 如何配置数据库
-  
-  *本项目默认使用 `MongoDB` 存储，需要在 `config` 目录下建立 `secret_config.js` 文件，并输入如下数据，如有其他适配（如数据库验证）还需修改 `app/service/mongodb.js` 的内容*
+
+  _本项目默认使用 `MongoDB` 存储，需要在 `config` 目录下建立 `secret_config.js` 文件，并输入如下数据，如有其他适配（如数据库验证）还需修改 `app/service/mongodb.js` 的内容_
 
   ```js
   module.exports = {
-    cookieKeyStr: 'cookieKeyStr', // Cookie 密钥
+    cookieKeyStr: "cookieKeyStr", // Cookie 密钥
     database: {
-      url: 'mongodb://mongo:27017', // MongoDB 数据库链接地址
-      baseName: 'job', // MongoDB Collection 名称
-      auth: { // 认证相关
-        authSource: 'admin',
-        user: 'user',
-        password: 'password',
+      url: "mongodb://mongo:27017", // MongoDB 数据库链接地址
+      baseName: "job", // MongoDB Collection 名称
+      auth: {
+        // 认证相关
+        authSource: "admin",
+        user: "user",
+        password: "password",
       },
     },
   };
   ```
 
 - API 来源
-  拉勾 | Boss直聘
-  - | -
-  WeChat Mini Program | WeChat Mini Program
 
- 
+  | 拉勾                | Boss 直聘           |
+  | ------------------- | ------------------- |
+  | WeChat Mini Program | WeChat Mini Program |
+
 ### 鸣谢
 
 - [Egg](https://eggjs.org/)

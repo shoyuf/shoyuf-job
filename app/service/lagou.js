@@ -1,24 +1,26 @@
-'use strict';
-
-const Service = require('egg').Service;
+const Service = require("egg").Service;
 class LagouService extends Service {
-  async remoteList(pageNum = 1, city = '成都', keyword = 'web前端') {
+  async remoteList(pageNum = 1, city = "成都", keyword = "web前端") {
     try {
-      const res = await this.ctx.curl('https://weapp.lagou.com/api/job/search', {
-        method: 'POST',
-        data: {
-          keyword,
-          pageSize: 12,
-          city,
-          sort: 'TIME', // TIME 时间排序 // RELEVANCY 相关性排序
-          pageNo: pageNum,
-        },
-        contentType: 'json',
-        dataType: 'json',
-        headers: {
-          Referer: 'https://servicewechat.com/wx7523c9b73699af04/201/page-frame.html',
-        },
-      });
+      const res = await this.ctx.curl(
+        "https://weapp.lagou.com/api/job/search",
+        {
+          method: "POST",
+          data: {
+            keyword,
+            pageSize: 12,
+            city,
+            sort: "TIME", // TIME 时间排序 // RELEVANCY 相关性排序
+            pageNo: pageNum,
+          },
+          contentType: "json",
+          dataType: "json",
+          headers: {
+            Referer:
+              "https://servicewechat.com/wx7523c9b73699af04/201/page-frame.html",
+          },
+        }
+      );
       /**
        * @returns { Object } {data:object[...result:arr],success:Boolean}
        * @return.result[city] 城市名称
@@ -36,12 +38,15 @@ class LagouService extends Service {
        * @return.result[salary] 薪资
        * @return.result[type] 职位类型 全职／兼职
        * @return.result[workYear] 职位经验
-      */
-      if (res.headers['content-type'] === 'text/html') { // 404
+       */
+      if (res.headers["content-type"] === "text/html") {
+        // 404
         return { list: [], msg: res.data };
-      } else if (res.data.data) { // correct
+      } else if (res.data.data) {
+        // correct
         return { list: res.data.data.result || [], msg: res.data };
-      } else { // fail
+      } else {
+        // fail
         return { list: [], msg: res.data };
       }
     } catch (err) {
@@ -52,13 +57,14 @@ class LagouService extends Service {
     const { ctx } = this;
     try {
       if (ctx.app.lagouCache.executedFlag === false) {
-        console.log('stopFlag, stop');
+        console.log("stopFlag, stop");
         return;
       }
       const res = await ctx.curl(`https://weapp.lagou.com/api/job/${jobId}`, {
-        dataType: 'json',
+        dataType: "json",
         headers: {
-          Referer: 'https://servicewechat.com/wx7523c9b73699af04/201/page-frame.html',
+          Referer:
+            "https://servicewechat.com/wx7523c9b73699af04/201/page-frame.html",
         },
       });
       /**
@@ -94,28 +100,32 @@ class LagouService extends Service {
          @return data.updatedAt 更新时间，截止日期时分
          @return data.workYear 职位经验
        */
-      if (res.headers['content-type'] === 'text/html') {
+      if (res.headers["content-type"] === "text/html") {
         // 请求错误
         return { item: null, msg: Object.assign(res.data, { jobId }) };
-      } else if (res.data.data) { // correct
+      } else if (res.data.data) {
+        // correct
         return { item: res.data.data };
-      } else { // fail
+      } else {
+        // fail
         return { item: null, msg: res.data };
       }
     } catch (err) {
       return { item: null, msg: err };
     }
   }
-  sleep(time = 5000, info = '') {
-    if (info) { console.log(info + 'wait' + time); }
-    return new Promise(resolve => {
+  sleep(time = 5000, info = "") {
+    if (info) {
+      console.log(info + "wait" + time);
+    }
+    return new Promise((resolve) => {
       setTimeout(() => {
         resolve();
       }, time);
     });
   }
   stop() {
-    console.log('stop!!!! info ⬆️');
+    console.log("stop!!!! info ⬆️");
     this.ctx.app.lagouCache.executedFlag = false;
   }
 }
