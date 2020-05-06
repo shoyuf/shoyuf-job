@@ -13,3 +13,4 @@ run/
 config/secret_config.js
 Dockerfile
 .dockerignore
+db/db.json
