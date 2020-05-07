@@ -13,5 +13,10 @@ module.exports = (appInfo) => {
     // add your config here
     middleware: [],
     database: secretConfig.database,
+    httpclient: {
+      request: {
+        timeout: 20000,
+      },
+    },
   };
 };
