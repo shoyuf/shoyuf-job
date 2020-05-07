@@ -33,12 +33,14 @@ class ZhipinTask extends Subscription {
       if (stopFlag) {
         throw new Error("stop flag is true");
       }
-      const { city, keyword } = await ctx.service.lowdb.get("zhipin.query");
-      const list = await ctx.service.zhipin.remoteList(
-        currentPage,
-        city,
-        keyword
+      const { city, keyword, experience } = await ctx.service.lowdb.get(
+        "zhipin.query"
       );
+      const list = await ctx.service.zhipin.remoteList(currentPage, {
+        city,
+        keyword,
+        experience,
+      });
       if (list.length) {
         await this.findAndUpadte(list);
       } else if (list.length === 0) {

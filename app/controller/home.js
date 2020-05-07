@@ -22,8 +22,13 @@ class HomeController extends Controller {
   async monitor(ctx) {
     const zhipin = await ctx.service.lowdb.get("zhipin");
     // const lagouCache = await service.jserver.find("lagou");
+    const zhipinExperience = zhipin.condition.experienceList.map((el) => {
+      el.checked = zhipin.query.experience.includes(el.code.toString());
+      return el;
+    });
     await ctx.render("monitor.tpl", {
       zhipin,
+      zhipinExperience,
       // lagouStatus: lagouCache.executedFlag,
     });
   }

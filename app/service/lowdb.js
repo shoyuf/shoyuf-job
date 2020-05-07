@@ -8,10 +8,12 @@ const adapter = new FileSync(path.resolve(__dirname, "../../db/db.json"));
 const db = low(adapter);
 // Set some defaults (required if your JSON file is empty)
 const hotCityList = require("../../const/hot-city-list");
+const experienceList = require("../../const/experience-list.js");
 db.defaults({
   zhipin: {
     condition: {
       hotCityList,
+      experienceList,
     },
   },
   lagou: {},
@@ -26,9 +28,6 @@ class LowdbService extends Service {
   }
   async set(key, value) {
     return db.set(key, value).write();
-  }
-  async join(key, value) {
-    
   }
 }
 

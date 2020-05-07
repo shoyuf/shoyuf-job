@@ -17,10 +17,30 @@
           已停止
         {% endif %}
         </legend>
-        <label for="keyword">
-          keyword:
-          <input type="text" id="keyword" name="keyword" value="{{zhipin.query.keyword}}" required>
-        </label>
+        <fieldset>
+          <legend>for list</legend>
+          <label for="keyword">
+            keyword:
+            <input type="text" id="keyword" name="keyword" value="{{zhipin.query.keyword}}" required>
+          </label>
+          <label for="city">
+            city:
+            <select name="city" id="city" required>
+              {% for item in zhipin.condition.hotCityList %}
+                <option value="{{item.code}}" {{"selected" if zhipin.query.city == item.code else ""}}>{{item.name}}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <br>
+          <label for="experience">
+            experience:
+            {% for item in zhipinExperience %}
+              <label for="experience_{{item.code}}">
+                <input type="checkbox" name="experience" id="experience_{{item.code}}" value="{{item.code}}"{% if item.checked %}checked{% endif %}>{{item.name}}
+              </label>
+            {% endfor %}
+          </label>
+        </fieldset>
         <label for="mpt">
           mpt:
           <input type="text" id="mpt" name="mpt" value="{{zhipin.query.mpt}}" required>
@@ -29,14 +49,7 @@
           wt:
           <input type="text" id="wt" name="wt" value="{{zhipin.query.wt}}" required>
         </label>
-        <label for="city">
-          city:
-          <select name="city" id="city" required>
-            {% for item in zhipin.condition.hotCityList %}
-              <option value="{{item.code}}" {{"selected" if zhipin.query.city == item.code else ""}}>{{item.name}}</option>
-            {% endfor %}
-          </select>
-        </label>
+        <br>
         <br>
         {# <button type="submit" formaction="/zhipin/condition">Get Condition</button> #}
         <button type="submit" formaction="/zhipin/start" {{ "disabled" if zhipin.executed else "" }}>1. Start Get List</button>
@@ -60,16 +73,5 @@
         <button type="submit" formaction="/lagou/stop" {{ "" if lagouStatus else "disabled" }}>Stop</button>
       </fieldset>
     </form>
-    <script>
-      {% if zhipin.status %}
-        setTimeout(() => {
-          location.reload()
-        }, 5000)
-      {% elif lagouStatus %}
-        setTimeout(() => {
-          location.reload()
-        }, 5000)
-      {% endif %}
-    </script>
   </body>
 </html>

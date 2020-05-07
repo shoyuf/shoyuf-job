@@ -41,13 +41,13 @@ class Zhipin extends Service {
       throw new Error(JSON.stringify(data));
     }
   }
-  async remoteList(pageNum = 1, city = "101270100", keyword = "web前端") {
+  async remoteList(pageNum = 1, { city, keyword, experience }) {
     const { ctx } = this;
     const { mpt, wt } = await ctx.service.lowdb.get("zhipin.query");
     const { data } = await ctx.curl(
       `${HOST_PREFIX}/wapi/zpgeek/miniapp/search/joblist.json?query=${encodeURIComponent(
         keyword
-      )}&city=${city}&stage=&scale=&industry=&degree=&salary=&experience=&position=&page=${pageNum}&appId=${APPID}`,
+      )}&city=${city}&stage=&scale=&industry=&degree=&salary=&experience=${experience.toString()}&position=&page=${pageNum}&appId=${APPID}`,
       {
         dataType: "json",
         headers: {
@@ -80,65 +80,62 @@ class Zhipin extends Service {
   }
   async remoteDetail(encryptId, lid) {
     const { ctx } = this;
-    try {
-      const stopFlag = await ctx.service.lowdb.get("zhipin.stopFlag");
-      if (stopFlag) {
-        console.log("stopFlag, stop");
-        return;
+    const stopFlag = await ctx.service.lowdb.get("zhipin.stopFlag");
+    if (stopFlag) {
+      console.log("stopFlag, stop");
+      return;
+    }
+    const { mpt, wt } = await ctx.service.lowdb.get("zhipin.query");
+    const { data } = await ctx.curl(
+      `${HOST_PREFIX}/wapi/zpgeek/miniapp/job/detail.json?jobId=${encryptId}&lid=${lid}&source=&scene=&appId=${APPID}`,
+      {
+        dataType: "json",
+        headers: {
+          mpt,
+          wt,
+        },
       }
-      const { mpt, wt } = await ctx.service.lowdb.get("zhipin.query");
-      const res = await ctx.curl(
-        `${HOST_PREFIX}//wapi/zpgeek/miniapp/job/detail.json?jobId=${encryptId}&lid=${lid}&source=&scene=&appId=${APPID}`,
-        {
-          dataType: "json",
-          headers: {
-            mpt,
-            wt,
-          },
-        }
+    );
+    /**
+     * @returns { Object } {code:int,message:str,zpData:object[bossBaseInfoVO,jobBaseInfoVo,brandComInfoVo,headhunterInfoVo,realationInfoVo]}
+     * @return.bossBaseInfoVO teamDesc 团队简介
+     * @return.bossBaseInfoVO teamLureList { Array } 团队tag
+     * @return.bossBaseInfoVO encryptBossId bossID
+     * @return.jobBaseInfoVO jobId JobID
+     * @return.jobBaseInfoVO expectId unknow
+     * @return.jobBaseInfoVO jobValidStatus { Int } 职位状态
+     * @return.jobBaseInfoVO positionName 职位名称
+     * @return.jobBaseInfoVO locationName 城市名称
+     * @return.jobBaseInfoVO areaDistrict 所属区县
+     * @return.jobBaseInfoVO businessDistrict 所属商业区
+     * @return.jobBaseInfoVO experienceName 职位经验 1-3年
+     * @return.jobBaseInfoVO degreeName 学历要求
+     * @return.jobBaseInfoVO lowSalary { int } 最低薪资
+     * @return.jobBaseInfoVO highSalary { int } 最高薪资
+     * @return.jobBaseInfoVO jobDesc 职位描述
+     * @return.jobBaseInfoVO requiredSkills { Array } 所需技能
+     * @return.jobBaseInfoVO address 地址
+     * @return.jobBaseInfoVO longitude { int } 经度
+     * @return.jobBaseInfoVO latitude { int } 纬度
+     * @return.jobBaseInfoVO salaryDesc 薪资描述文本
+     * @return.brandComInfoVO brandName 品牌名称
+     * @return.brandComInfoVO industryName 产业名称
+     * @return.brandComInfoVO stageName 融资状态
+     * @return.brandComInfoVO scaleName 公司人数规模
+     * @return.brandComInfoVO comName 公司全称
+     * @return.brandComInfoVO encryptBrandId 公司ID
+     * @return.headhunterInfoVo 猎头信息
+     * @return.realationInfoVo 关系信息
+     */
+    if (data.code === 0) {
+      const { brandComInfoVO, jobBaseInfoVO } = data.zpData;
+      console.log(
+        `gotRemoteDetail: ${brandComInfoVO.comName} | ${jobBaseInfoVO.positionName} - ${encryptId}`
       );
-      /**
-       * @returns { Object } {rescode:int,resmsg:str,data:object[bossBaseInfoVO,jobBaseInfoVo,brandComInfoVo,headhunterInfoVo,realationInfoVo]}
-       * @return.bossBaseInfoVO teamDesc 团队简介
-       * @return.bossBaseInfoVO teamLureList { Array } 团队tag
-       * @return.bossBaseInfoVO encryptBossId bossID
-       * @return.jobBaseInfoVO jobId JobID
-       * @return.jobBaseInfoVO expectId unknow
-       * @return.jobBaseInfoVO jobValidStatus { Int } 职位状态
-       * @return.jobBaseInfoVO positionName 职位名称
-       * @return.jobBaseInfoVO locationName 城市名称
-       * @return.jobBaseInfoVO areaDistrict 所属区县
-       * @return.jobBaseInfoVO businessDistrict 所属商业区
-       * @return.jobBaseInfoVO experienceName 职位经验 1-3年
-       * @return.jobBaseInfoVO degreeName 学历要求
-       * @return.jobBaseInfoVO lowSalary { int } 最低薪资
-       * @return.jobBaseInfoVO highSalary { int } 最高薪资
-       * @return.jobBaseInfoVO jobDesc 职位描述
-       * @return.jobBaseInfoVO requiredSkills { Array } 所需技能
-       * @return.jobBaseInfoVO address 地址
-       * @return.jobBaseInfoVO longitude { int } 经度
-       * @return.jobBaseInfoVO latitude { int } 纬度
-       * @return.jobBaseInfoVO salaryDesc 薪资描述文本
-       * @return.brandComInfoVO brandName 品牌名称
-       * @return.brandComInfoVO industryName 产业名称
-       * @return.brandComInfoVO stageName 融资状态
-       * @return.brandComInfoVO scaleName 公司人数规模
-       * @return.brandComInfoVO comName 公司全称
-       * @return.brandComInfoVO encryptBrandId 公司ID
-       * @return.headhunterInfoVo 猎头信息
-       * @return.realationInfoVo 关系信息
-       */
-      if (res.data.rescode === 1) {
-        console.log(
-          `gotRemoteDetail: ${res.data.data.brandComInfoVO.comName} | ${res.data.data.jobBaseInfoVO.positionName} - ${encryptId}`
-        );
-        return { item: res.data.data };
-      } else {
-        // 1001 未授权 || 被风控 || 3001 职位不存在
-        return { item: null, msg: Object.assign(res.data, { encryptId }) };
-      }
-    } catch (err) {
-      return { item: null, msg: err };
+      return data.zpData;
+    } else {
+      // 1001 未授权 || 被风控 || 3001 职位不存在
+      throw new Error(JSON.stringify(data));
     }
   }
   sleep(time = 5000, info = "") {
