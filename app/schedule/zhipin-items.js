@@ -23,9 +23,9 @@ class ZhipinItemsTask extends Subscription {
     countNum = 0;
     timeoutCount = 0;
     thisCount = 0;
-    this.testCount();
+    this.countNoDetails();
   }
-  async testCount() {
+  async countNoDetails() {
     const { ctx } = this;
     try {
       const client = await ctx.service.mongodb.client();
@@ -40,14 +40,15 @@ class ZhipinItemsTask extends Subscription {
         ctx.service.zhipin.stop();
       }
     } catch (err) {
-      console.log(err);
+      ctx.logger.error(err);
       ctx.service.zhipin.stop();
     }
   }
   async findAndUpdateDetail() {
     const { ctx } = this;
     try {
-      if (ctx.app.zhipinCache.executedFlag === false) {
+      const stopFlag = await ctx.service.lowdb.get("zhipin.stopFlag");
+      if (stopFlag) {
         console.log("stopFlag");
         return;
       }
@@ -58,16 +59,12 @@ class ZhipinItemsTask extends Subscription {
         jobStatus: 1,
       });
       if (findOneRes) {
-        const remoteDetailRes = await ctx.service.zhipin.remoteDetail(
+        const jobDetail = await ctx.service.zhipin.remoteDetail(
           findOneRes.jobId,
           findOneRes.zhipin_cache_lid
         );
-        if (remoteDetailRes.item) {
-          const {
-            bossBaseInfoVO,
-            jobBaseInfoVO,
-            brandComInfoVO,
-          } = remoteDetailRes.item;
+        if (jobDetail) {
+          const { bossBaseInfoVO, jobBaseInfoVO, brandComInfoVO } = jobDetail;
           const jobStatus =
             jobBaseInfoVO.jobValidStatus === 1
               ? 2
@@ -94,6 +91,8 @@ class ZhipinItemsTask extends Subscription {
                 companySize: brandComInfoVO.scaleName,
                 companyFullName: brandComInfoVO.comName,
                 companyId: brandComInfoVO.encryptBrandId,
+                salary_min: jobBaseInfoVO.lowSalary,
+                salary_max: jobBaseInfoVO.highSalary,
                 jobStatus,
               },
               $currentDate: { update_time: true },
@@ -109,30 +108,31 @@ class ZhipinItemsTask extends Subscription {
           );
           await ctx.service.zhipin.sleep(5000, "Get Remote Item wait");
           this.findAndUpdateDetail();
-        } else if (remoteDetailRes.msg.rescode === 3001) {
-          console.log(remoteDetailRes.msg);
-          timeoutCount = 0;
-          await client.collection("jobs").updateOne(
-            { jobId: findOneRes.jobId },
-            {
-              $set: { jobStatus: 3 },
-            }
-          );
-          await ctx.service.zhipin.sleep(4000, "Get Remote Item wait");
-          this.findAndUpdateDetail();
-        } else if (timeoutCount < 2) {
-          timeoutCount++;
-          this.findAndUpdateDetail();
-        } else {
-          console.log(remoteDetailRes.msg);
-          ctx.service.zhipin.stop();
         }
+        // else if (remoteDetailRes.msg.rescode === 3001) {
+        //   console.log(remoteDetailRes.msg);
+        //   timeoutCount = 0;
+        //   await client.collection("jobs").updateOne(
+        //     { jobId: findOneRes.jobId },
+        //     {
+        //       $set: { jobStatus: 3 },
+        //     }
+        //   );
+        //   await ctx.service.zhipin.sleep(4000, "Get Remote Item wait");
+        //   this.findAndUpdateDetail();
+        // } else if (timeoutCount < 2) {
+        //   timeoutCount++;
+        //   this.findAndUpdateDetail();
+        // } else {
+        //   console.log(remoteDetailRes.msg);
+        //   ctx.service.zhipin.stop();
+        // }
       } else {
         console.log("no more no-detail item!!! stop");
         ctx.service.zhipin.stop();
       }
     } catch (err) {
-      console.log(err);
+      ctx.logger.error(err);
       ctx.service.zhipin.stop();
     }
   }
