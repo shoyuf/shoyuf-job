@@ -5,8 +5,8 @@ const colorList = ['lightsalmon', 'salmon', 'darksalmon', 'lightcoral', 'indianr
 let aMap = new AMap.Map('container', {
   showIndoorMap: false,
   mapStyle: 'amap://styles/c4df92f5249831f6e56519481f366553',
-  center: [104.0655899048, 30.6565202250],
-  zoom: 12,
+  center: [104.18643951818353, 36.8815429424562],
+  zoom: 5,
 });
 aMap.addControl(new AMap.ToolBar({
   position: 'LB',
