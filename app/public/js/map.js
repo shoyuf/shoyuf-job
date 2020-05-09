@@ -16,6 +16,7 @@ aMap.on("complete", function () {
   NProgress.done();
 });
 
+
 const {lat ,lng} = aMap.getCenter()
 const mapCenter = {lat ,lng}
 
@@ -31,6 +32,7 @@ const app = new Vue({
       favoriteList: JSON.parse(localStorage.getItem('favoriteList')) || [],
       homePosition: JSON.parse(localStorage.getItem('homePosition')) || mapCenter,
       circleRadius: JSON.parse(localStorage.getItem('circleRadius')) || 1000,
+      centerPosition: '',
       jobList: [],
       low_salary: 12,
       jobExperience: '全部',
@@ -194,8 +196,20 @@ const app = new Vue({
       })
       this.jobExperienceList = res.data.filters.jobExperience.map(e => e._id);
     },
+    getCenter() {
+      const {lat ,lng} = aMap.getCenter()
+      return `${lng},${lat}`
+    },
+    jumpToCenterPoint(centerPosition) {
+      const [lng, lat] = centerPosition.split(',')
+      aMap.setCenter([lng, lat])
+    }
   },
   mounted() {
     this.getList();
+    aMap.on("mapmove", () => {
+      this.centerPosition = this.getCenter()
+    })
+    this.centerPosition = this.getCenter()
   },
 });

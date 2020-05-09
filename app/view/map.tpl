@@ -8,10 +8,10 @@
   <title>Map</title>
   <script src="https://cdn.jsdelivr.net/npm/axios@0.18.0/dist/axios.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ant-design-vue@1.3.7/dist/antd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ant-design-vue@1/dist/antd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ant-design-vue@1.3.7/dist/antd.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ant-design-vue@1/dist/antd.min.css">
   <style>
     [v-cloak] {
         display: none;
@@ -81,6 +81,13 @@
         background: #fffc;
         border: #b2b2b2;
       }
+      .fixed-top .right{
+        display:inline-flex;
+        align-items:center;
+      }
+      .fixed-top .right .ant-input{
+        margin-right:15px;
+      }
       .flex {
         display: flex;
         align-items: center;
@@ -95,11 +102,24 @@
       .job-desc p{
         margin-bottom:0;
       }
+      #center-pointer{
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        color: #68bf1f;
+        z-index: 99999;
+        font-style: normal;
+        font-weight: bolder;
+        font-size: 21px;
+        line-height: 1;
+      }
     </style>
 </head>
 
 <body>
-  <div id="container"></div>
+  <div id="container">
+    <i id="center-pointer">⊙</i>
+  </div>
   <div id="app">
     {% raw %}
     <div class="fixed-top" v-cloak>
@@ -128,6 +148,7 @@
         <a-button icon="search" type="primary" shape="circle" size="small" @click="filter"></a-button>
       </div>
       <div class="right">
+        <a-input v-model="centerPosition" size="small" @keyup.enter.native="jumpToCenterPoint(centerPosition)"></a-input>
         <a-switch @change='toggleHomeMarker' size="small" />
       </div>
     </div>
