@@ -15,6 +15,10 @@ aMap.addControl(new AMap.ToolBar({
 aMap.on("complete", function () {
   NProgress.done();
 });
+
+const {lat ,lng} = aMap.getCenter()
+const mapCenter = {lat ,lng}
+
 const app = new Vue({
   el: '#app',
   data() {
@@ -25,7 +29,7 @@ const app = new Vue({
       drawerVisible: false,
       blockedList: JSON.parse(localStorage.getItem('blockedList')) || [],
       favoriteList: JSON.parse(localStorage.getItem('favoriteList')) || [],
-      homePosition: JSON.parse(localStorage.getItem('homePosition')) || aMap.getCenter(),
+      homePosition: JSON.parse(localStorage.getItem('homePosition')) || mapCenter,
       circleRadius: JSON.parse(localStorage.getItem('circleRadius')) || 1000,
       jobList: [],
       low_salary: 12,
@@ -61,7 +65,7 @@ const app = new Vue({
         homeMarker = null;
       } else {
         homeMarker = new AMap.Circle({
-          center: new AMap.LngLat(this.homePosition.lng, this.homePosition.lat) || aMap.getCenter(),
+          center: new AMap.LngLat(this.homePosition.lng, this.homePosition.lat) || mapCenter,
           radius: this.circleRadius,
           stokeColor: '#1890ff',
           strokeOpacity: 0.2,
@@ -77,8 +81,8 @@ const app = new Vue({
         circleEdit.on('adjust', e => {
           this.circleRadius = e.radius;
         });
-        circleEdit.on('move', e => {
-          this.homePosition = e.lnglat;
+        circleEdit.on('move', ({ lnglat: { lat,lng}}) => {
+          this.homePosition = {lat ,lng};
         });
       }
     },
