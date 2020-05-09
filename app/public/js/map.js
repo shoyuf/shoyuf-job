@@ -98,7 +98,6 @@ const app = new Vue({
         this.jobDetail.marker.hide()
         this.blockedList.push(currentJob.jobId);
         this.markersNum--;
-        jobClusterer.removeMarker(this.jobDetail.marker)
         this.drawerVisible = false;
       }
     },
@@ -140,12 +139,6 @@ const app = new Vue({
         }
       });
       this.markersNum = notFavArr.length;
-      this.removeMarkers()
-      jobClusterer.addMarkers(notFavArr.map(e => e.marker))
-    },
-    // 加入聚合的时候列表里面不能有收藏的点！
-    removeMarkers() {
-      jobClusterer.clearMarkers()
     },
     addAllMarkers() {
       this.low_salary = 0;
@@ -182,7 +175,7 @@ const app = new Vue({
           content: `<div class="map-icon ${e.jobFrom} ${favorited ? 'favorited' : ''}" data-name="${e.companyShortName}"></div>`,
         });
         Object.assign(e, { marker, favorited: favorited, blocked: blocked, index })
-        AMap.event.addListener(marker, 'click', async () => {
+        AMap.Event.addListener(marker, 'click', async () => {
           NProgress.start();
           const resItem = await axios.get('/resources/' + e._id);
           // this.jobDetail = Object.assign(resItem.data, e);
@@ -199,13 +192,6 @@ const app = new Vue({
     },
   },
   mounted() {
-    jobClusterer = new AMap.MarkerClusterer(
-      aMap, [],
-      {
-        maxZoom: 15,
-        gridSize: 30
-      }
-    );
     this.getList();
   },
 });

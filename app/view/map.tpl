@@ -224,7 +224,7 @@
     </a-drawer>
     {% endraw %}
   </div>
-  <script src="https://webapi.amap.com/maps?v=1.4.8&key=561e624287cdebd75ad99d43e00c53ef&plugin=AMap.CircleEditor,AMap.MarkerClusterer,AMap.ToolBar"></script>
+  <script src="https://webapi.amap.com/maps?v=2.0&key=561e624287cdebd75ad99d43e00c53ef&plugin=AMap.CircleEditor,AMap.MarkerClusterer,AMap.ToolBar"></script>
   <script src="/public/js/map.js"></script>
 </body>
 
