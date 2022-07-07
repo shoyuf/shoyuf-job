@@ -8,7 +8,7 @@
     "egg-scripts": "^2.5.0",
     "egg-view-nunjucks": "^2.2.0",
     "json-server": "^0.16.1",
-    "moment": "^2.22.2",
+    "moment": "^2.29.4",
     "mongodb": "^3.1.4"
   },
   "devDependencies": {
